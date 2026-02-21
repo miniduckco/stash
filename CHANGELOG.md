@@ -6,6 +6,7 @@
 - Return canonical `Payment` and `WebhookEvent` models.
 - Add providerOptions typing and overlap validation.
 - Update docs and examples to the new API.
+- Add Paystack provider support for card checkout, webhooks, and verification.
 
 ## 0.1.0
 
