@@ -18,6 +18,7 @@ Start with the quickstart tutorial: `docs/tutorials/quickstart.md`.
 - How-to guides: `docs/how-to/README.md`
 - Reference: `docs/reference/api.md`
 - Explanation: `docs/explanation/architecture.md`
+- Skills quick reference: `doc/skill.md`
 
 ## Examples
 
