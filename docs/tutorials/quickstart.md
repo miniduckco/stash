@@ -15,6 +15,18 @@ Choose a provider and use the unified `makePayment` API.
 - Ozow example: `examples/make-payment-ozow.ts`
 - Payfast example: `examples/make-payment-payfast.ts`
 
+### Required environment variables
+
+Ozow
+- `OZOW_SITE_CODE`
+- `OZOW_API_KEY`
+- `OZOW_PRIVATE_KEY`
+
+Payfast
+- `PAYFAST_MERCHANT_ID`
+- `PAYFAST_MERCHANT_KEY`
+- `PAYFAST_PASSPHRASE`
+
 ## 3) Handle webhooks
 
 Verify the signature before you update your order.
