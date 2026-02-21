@@ -1,7 +1,16 @@
-import { makePayment } from "@miniduck/stash";
+import { createStash } from "@miniduck/stash";
 
-const payment = await makePayment({
+const stash = createStash({
   provider: "payfast",
+  credentials: {
+    merchantId: process.env.PAYFAST_MERCHANT_ID,
+    merchantKey: process.env.PAYFAST_MERCHANT_KEY,
+    passphrase: process.env.PAYFAST_PASSPHRASE,
+  },
+  testMode: true,
+});
+
+const payment = await stash.payments.create({
   amount: "249.99",
   currency: "ZAR",
   reference: "ORDER-12345",
@@ -16,16 +25,10 @@ const payment = await makePayment({
     cancelUrl: "https://shop.example.com/payments/cancel",
     notifyUrl: "https://shop.example.com/payments/webhook",
   },
-  secrets: {
-    merchantId: process.env.PAYFAST_MERCHANT_ID,
-    merchantKey: process.env.PAYFAST_MERCHANT_KEY,
-    passphrase: process.env.PAYFAST_PASSPHRASE,
-  },
   providerOptions: {
     paymentMethod: "cc",
     emailConfirmation: true,
   },
-  testMode: true,
 });
 
-console.log(payment.redirectUrl, payment.formFields);
+console.log(payment.redirectUrl);

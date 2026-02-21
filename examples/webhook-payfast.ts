@@ -1,15 +1,18 @@
-import { verifyWebhookSignature } from "@miniduck/stash";
+import { createStash } from "@miniduck/stash";
 
-const result = verifyWebhookSignature({
+const stash = createStash({
   provider: "payfast",
-  rawBody: req.rawBody,
-  secrets: {
+  credentials: {
+    merchantId: process.env.PAYFAST_MERCHANT_ID,
+    merchantKey: process.env.PAYFAST_MERCHANT_KEY,
     passphrase: process.env.PAYFAST_PASSPHRASE,
   },
 });
 
-if (!result.isValid) {
-  res.status(400).send("Invalid signature");
-} else {
-  res.status(200).send("OK");
+const { event } = stash.webhooks.parse({ rawBody: req.rawBody });
+
+if (event.type === "payment.completed") {
+  // update order
 }
+
+res.status(200).send("OK");
