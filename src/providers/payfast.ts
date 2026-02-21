@@ -84,18 +84,20 @@ function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   fields.m_payment_id = input.reference;
   fields.amount = formatAmount(input.amount);
 
-  const providerItemName = input.providerData?.item_name;
-  const providerItemDescription = input.providerData?.item_description;
+  const providerItemName = input.providerData?.item_name ?? undefined;
+  const providerItemDescription = input.providerData?.item_description ?? undefined;
 
   const itemName =
     (providerItemName !== undefined
-      ? toStringValue(providerItemName)
+      ? toStringValue(providerItemName as string | number | boolean)
       : input.description) ?? input.reference;
 
   fields.item_name = itemName;
 
   if (providerItemDescription !== undefined) {
-    fields.item_description = toStringValue(providerItemDescription);
+    fields.item_description = toStringValue(
+      providerItemDescription as string | number | boolean
+    );
   }
 
   if (input.metadata) {
