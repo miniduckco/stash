@@ -13,6 +13,23 @@ PaymentRequest fields of note:
 - `providerOptions`: typed provider-specific options (preferred).
 - `providerData`: advanced escape hatch for raw provider fields.
 
+### providerOptions mapping
+
+Payfast
+- `paymentMethod` → `payment_method`
+- `emailConfirmation` → `email_confirmation`
+- `confirmationAddress` → `confirmation_address`
+- `mPaymentId` → `m_payment_id`
+- `itemName` → `item_name`
+- `itemDescription` → `item_description`
+
+Ozow
+- `selectedBankId` → `SelectedBankId`
+- `customerIdentityNumber` → `CustomerIdentityNumber`
+- `allowVariableAmount` → `AllowVariableAmount`
+- `variableAmountMin` → `VariableAmountMin`
+- `variableAmountMax` → `VariableAmountMax`
+
 ## verifyWebhookSignature
 
 ```ts
