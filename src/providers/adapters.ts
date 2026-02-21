@@ -1,11 +1,13 @@
 import { pairsToRecord, parseFormEncoded } from "../internal/form.js";
-import type { PaymentRequest, WebhookEvent } from "../types.js";
+import type { PaymentRequest, VerificationResult, WebhookEvent } from "../types.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./payfast.js";
+import { makePaystackPayment, verifyPaystackPayment, verifyPaystackWebhook } from "./paystack.js";
 import type {
   ProviderAdapter,
   ProviderWebhookInput,
   ProviderWebhookResult,
+  ProviderVerifyInput,
 } from "./provider-adapter.js";
 
 function parseWebhookPayload(rawBody: string | Buffer): Record<string, string> {
@@ -93,10 +95,133 @@ function parseOzowWebhook(input: ProviderWebhookInput): ProviderWebhookResult {
   };
 }
 
+function parsePaystackWebhook(
+  input: ProviderWebhookInput
+): ProviderWebhookResult {
+  const signature = resolveHeader(input.headers, "x-paystack-signature");
+  const secretKey = input.secrets.paystackSecretKey ?? "";
+  const isValid = verifyPaystackWebhook(input.rawBody, signature, secretKey);
+
+  const rawText = Buffer.isBuffer(input.rawBody)
+    ? input.rawBody.toString("utf8")
+    : input.rawBody;
+  const payload = JSON.parse(rawText) as Record<string, unknown>;
+
+  const event = mapPaystackEvent(payload as Record<string, unknown>);
+
+  return {
+    isValid,
+    event,
+    raw: payload,
+  };
+}
+
+function mapPaystackEvent(payload: Record<string, unknown>): WebhookEvent {
+  const eventType = String((payload as { event?: string }).event ?? "").toLowerCase();
+  const type = eventType === "charge.success" ? "payment.completed" : "payment.failed";
+
+  const data = (payload as { data?: Record<string, unknown> }).data ?? {};
+
+  return {
+    type,
+    data: {
+      provider: "paystack",
+      reference: String((data as { reference?: string }).reference ?? ""),
+      providerRef: (data as { id?: string | number }).id
+        ? String((data as { id?: string | number }).id)
+        : undefined,
+      amount: (data as { amount?: number | string }).amount
+        ? Number((data as { amount?: number | string }).amount)
+        : undefined,
+      currency: (data as { currency?: string }).currency
+        ? String((data as { currency?: string }).currency)
+        : undefined,
+      raw: payload,
+    },
+  };
+}
+
+function resolveHeader(
+  headers: ProviderWebhookInput["headers"],
+  key: string
+): string | undefined {
+  if (!headers) return undefined;
+  const lowerKey = key.toLowerCase();
+  for (const [headerKey, value] of Object.entries(headers)) {
+    if (headerKey.toLowerCase() !== lowerKey) continue;
+    if (Array.isArray(value)) return value[0];
+    return value;
+  }
+  return undefined;
+}
+
+async function verifyOzowPaymentByReference(
+  input: ProviderVerifyInput
+): Promise<VerificationResult> {
+  const siteCode = input.secrets.siteCode;
+  const apiKey = input.secrets.apiKey;
+  if (!siteCode || !apiKey) {
+    throw new Error("Ozow credentials missing for verification");
+  }
+
+  const baseUrl = input.testMode
+    ? "https://stagingapi.ozow.com"
+    : "https://api.ozow.com";
+
+  const url = new URL(`${baseUrl}/GetTransactionByReference`);
+  url.searchParams.set("siteCode", siteCode);
+  url.searchParams.set("transactionReference", input.reference);
+  if (input.testMode) {
+    url.searchParams.set("isTest", "true");
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      ApiKey: apiKey,
+      Accept: "application/json",
+    },
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(`Ozow verify failed: ${response.statusText}`);
+  }
+
+  const transaction = Array.isArray(body) ? body[0] : null;
+  const statusRaw = String(transaction?.Status ?? "").toLowerCase();
+  const status =
+    statusRaw === "complete"
+      ? "paid"
+      : statusRaw === "cancelled" || statusRaw === "error"
+        ? "failed"
+        : statusRaw
+          ? "pending"
+          : "unknown";
+
+  return {
+    provider: "ozow",
+    status,
+    providerRef: transaction?.TransactionId,
+    raw: body,
+  };
+}
+
+async function verifyPaystackPaymentByReference(
+  input: ProviderVerifyInput
+): Promise<VerificationResult> {
+  const secretKey = input.secrets.paystackSecretKey;
+  if (!secretKey) {
+    throw new Error("Paystack secret key missing for verification");
+  }
+
+  return verifyPaystackPayment(input.reference, secretKey);
+}
+
 export const ozowAdapter: ProviderAdapter = {
   id: "ozow",
   createPayment: async (input: PaymentRequest) => makeOzowPayment(input),
   parseWebhook: (input: ProviderWebhookInput) => parseOzowWebhook(input),
+  verifyPayment: (input: ProviderVerifyInput) => verifyOzowPaymentByReference(input),
 };
 
 export const payfastAdapter: ProviderAdapter = {
@@ -105,8 +230,17 @@ export const payfastAdapter: ProviderAdapter = {
   parseWebhook: (input: ProviderWebhookInput) => parsePayfastWebhook(input),
 };
 
+export const paystackAdapter: ProviderAdapter = {
+  id: "paystack",
+  createPayment: async (input: PaymentRequest) => makePaystackPayment(input),
+  parseWebhook: (input: ProviderWebhookInput) => parsePaystackWebhook(input),
+  verifyPayment: (input: ProviderVerifyInput) =>
+    verifyPaystackPaymentByReference(input),
+};
+
 export const providerAdapters: Record<PaymentRequest["provider"], ProviderAdapter> =
   {
     ozow: ozowAdapter,
     payfast: payfastAdapter,
+    paystack: paystackAdapter,
   };

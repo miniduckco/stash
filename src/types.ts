@@ -1,4 +1,4 @@
-export type PaymentProvider = "ozow" | "payfast";
+export type PaymentProvider = "ozow" | "payfast" | "paystack";
 
 export type PayfastProviderOptions = {
   paymentMethod?: string;
@@ -9,6 +9,10 @@ export type PayfastProviderOptions = {
   itemDescription?: string;
 };
 
+export type PaystackProviderOptions = {
+  channels?: string[];
+};
+
 export type OzowProviderOptions = {
   selectedBankId?: string;
   customerIdentityNumber?: string;
@@ -17,7 +21,10 @@ export type OzowProviderOptions = {
   variableAmountMax?: number;
 };
 
-export type ProviderOptions = PayfastProviderOptions | OzowProviderOptions;
+export type ProviderOptions =
+  | PayfastProviderOptions
+  | OzowProviderOptions
+  | PaystackProviderOptions;
 
 export type OzowCredentials = {
   siteCode: string;
@@ -31,9 +38,13 @@ export type PayfastCredentials = {
   passphrase?: string;
 };
 
+export type PaystackCredentials = {
+  secretKey: string;
+};
+
 export type StashConfig = {
   provider: PaymentProvider;
-  credentials: OzowCredentials | PayfastCredentials;
+  credentials: OzowCredentials | PayfastCredentials | PaystackCredentials;
   testMode?: boolean;
   defaults?: {
     currency?: string;
@@ -69,6 +80,17 @@ export type Payment = {
   currency: string;
   redirectUrl?: string;
   provider: PaymentProvider;
+  providerRef?: string;
+  raw?: unknown;
+};
+
+export type PaymentVerifyInput = {
+  reference: string;
+};
+
+export type VerificationResult = {
+  provider: PaymentProvider;
+  status: "pending" | "paid" | "failed" | "unknown";
   providerRef?: string;
   raw?: unknown;
 };
@@ -124,6 +146,7 @@ export type PaymentRequest = {
     merchantId?: string;
     merchantKey?: string;
     passphrase?: string;
+    paystackSecretKey?: string;
   };
   providerOptions?: ProviderOptions;
   testMode?: boolean;
@@ -147,6 +170,7 @@ export type WebhookVerifyInput = {
   secrets: {
     privateKey?: string;
     passphrase?: string;
+    paystackSecretKey?: string;
   };
 };
 

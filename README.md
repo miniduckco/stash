@@ -26,6 +26,18 @@ Runnable examples live in `examples/`:
 
 - Index: `examples/README.md`
 
+## Providers and operations
+
+Providers
+- Ozow
+- Payfast
+- Paystack
+
+Supported operations
+- payments.create
+- payments.verify (Ozow, Paystack; Payfast unsupported)
+- webhooks.parse
+
 Notes:
 - Ozow hash excludes `CustomerCellphoneNumber`, `Token`, and `GenerateShortUrl`.
 - Ozow `AllowVariableAmount=false` is excluded from the hash.

@@ -12,9 +12,11 @@ import type {
   Payment,
   PaymentCreateInput,
   PaymentProvider,
+  PaymentVerifyInput,
   PaymentRequest,
   PaymentResponse,
   StashConfig,
+  VerificationResult,
   WebhookEvent,
   WebhookParseInput,
   WebhookVerifyInput,
@@ -23,6 +25,7 @@ import type {
 import { providerAdapters } from "./providers/adapters.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js";
+import { makePaystackPayment, verifyPaystackWebhook } from "./providers/paystack.js";
 
 export type {
   OzowProviderOptions,
@@ -30,11 +33,14 @@ export type {
   Payment,
   PaymentCreateInput,
   PaymentProvider,
+  PaymentVerifyInput,
   PaymentRequest,
   PaymentResponse,
+  PaystackProviderOptions,
   PayfastProviderOptions,
   ProviderOptions,
   StashConfig,
+  VerificationResult,
   WebhookEvent,
   WebhookParseInput,
   WebhookVerifyInput,
@@ -83,6 +89,21 @@ export function createStash(config: StashConfig) {
           providerRef: response.paymentRequestId,
           raw: response.raw ?? response,
         };
+      },
+      verify: async (input: PaymentVerifyInput): Promise<VerificationResult> => {
+        const adapter = providerAdapters[provider];
+        if (!adapter?.verifyPayment) {
+          throw new StashError(
+            "unsupported_capability",
+            `payments.verify is not supported for ${provider}`
+          );
+        }
+
+        return adapter.verifyPayment({
+          reference: input.reference,
+          secrets: buildSecrets(provider, config.credentials),
+          testMode,
+        });
       },
     },
     webhooks: {
@@ -141,10 +162,20 @@ function buildSecrets(
     merchantKey?: string;
     passphrase?: string;
   };
+  if (provider === "payfast") {
+    return {
+      merchantId: payfast.merchantId,
+      merchantKey: payfast.merchantKey,
+      passphrase: payfast.passphrase,
+    };
+  }
+
+  const paystack = credentials as StashConfig["credentials"] & {
+    secretKey?: string;
+  };
+
   return {
-    merchantId: payfast.merchantId,
-    merchantKey: payfast.merchantKey,
-    passphrase: payfast.passphrase,
+    paystackSecretKey: paystack.secretKey,
   };
 }
 
@@ -160,6 +191,8 @@ export async function makePayment(
       return makeOzowPayment(input);
     case "payfast":
       return makePayfastPayment(input);
+    case "paystack":
+      return makePaystackPayment(input);
     default:
       throw new Error(`Unsupported provider: ${input.provider}`);
   }
@@ -176,7 +209,37 @@ export function verifyWebhookSignature(
       return verifyOzowWebhook(input);
     case "payfast":
       return verifyPayfastWebhook(input);
+    case "paystack": {
+      const signature = resolveHeader(input.headers, "x-paystack-signature");
+      const secretKey = input.secrets.paystackSecretKey;
+      if (!input.rawBody || !secretKey) {
+        return {
+          provider: "paystack",
+          isValid: false,
+          reason: "missingPayload",
+        };
+      }
+
+      return {
+        provider: "paystack",
+        isValid: verifyPaystackWebhook(input.rawBody, signature, secretKey),
+      };
+    }
     default:
       throw new Error(`Unsupported provider: ${input.provider}`);
   }
+}
+
+function resolveHeader(
+  headers: WebhookVerifyInput["headers"],
+  key: string
+): string | undefined {
+  if (!headers) return undefined;
+  const lowerKey = key.toLowerCase();
+  for (const [headerKey, value] of Object.entries(headers)) {
+    if (headerKey.toLowerCase() !== lowerKey) continue;
+    if (Array.isArray(value)) return value[0];
+    return value;
+  }
+  return undefined;
 }

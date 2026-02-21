@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { test } from "node:test";
 import { createStash, StashError } from "../src/index.js";
 import { encodePayfastValue } from "../src/internal/encoding.js";
@@ -61,6 +61,65 @@ test("createStash payments.create maps ozow response", async () => {
   globalThis.fetch = originalFetch;
 });
 
+test("createStash payments.create maps paystack response", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async () => {
+    return {
+      ok: true,
+      json: async () => ({
+        status: true,
+        data: {
+          authorization_url: "https://checkout.paystack.com/abc",
+          reference: "REF-1",
+        },
+      }),
+    } as Response;
+  }) as typeof fetch;
+
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  const payment = await stash.payments.create({
+    amount: 2500,
+    reference: "REF-1",
+    customer: {
+      email: "buyer@example.com",
+    },
+  });
+
+  assert.equal(payment.provider, "paystack");
+  assert.equal(payment.providerRef, "REF-1");
+  assert.equal(payment.redirectUrl, "https://checkout.paystack.com/abc");
+
+  globalThis.fetch = originalFetch;
+});
+
+test("createStash payments.create rejects paystack major units", async () => {
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      stash.payments.create({
+        amount: "10.00",
+        reference: "REF-2",
+        customer: {
+          email: "buyer@example.com",
+        },
+      }),
+    /minor units/
+  );
+});
+
 test("webhooks.parse returns canonical event for payfast", () => {
   const stash = createStash({
     provider: "payfast",
@@ -114,4 +173,83 @@ test("webhooks.parse throws invalid_signature for payfast", () => {
     const stashError = error as StashError;
     return stashError.code === "invalid_signature";
   });
+});
+
+test("webhooks.parse returns canonical event for paystack", () => {
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  const payload = {
+    event: "charge.success",
+    data: {
+      reference: "REF-3",
+      id: 555,
+      amount: 2500,
+      currency: "ZAR",
+    },
+  };
+
+  const rawBody = JSON.stringify(payload);
+  const signature = createHmac("sha512", "sk_test")
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  const parsed = stash.webhooks.parse({
+    rawBody,
+    headers: {
+      "x-paystack-signature": signature,
+    },
+  });
+
+  assert.equal(parsed.provider, "paystack");
+  assert.equal(parsed.event.type, "payment.completed");
+  assert.equal(parsed.event.data.reference, "REF-3");
+});
+
+test("payments.verify throws unsupported_capability for payfast", async () => {
+  const stash = createStash({
+    provider: "payfast",
+    credentials: {
+      merchantId: "merchant",
+      merchantKey: "key",
+    },
+  });
+
+  await assert.rejects(
+    () => stash.payments.verify({ reference: "ORDER-1" }),
+    (error) => (error as StashError).code === "unsupported_capability"
+  );
+});
+
+test("payments.verify returns paid for paystack", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async () => {
+    return {
+      ok: true,
+      json: async () => ({
+        status: true,
+        data: {
+          status: "success",
+          id: 123,
+        },
+      }),
+    } as Response;
+  }) as typeof fetch;
+
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  const result = await stash.payments.verify({ reference: "REF-1" });
+  assert.equal(result.status, "paid");
+
+  globalThis.fetch = originalFetch;
 });
