@@ -8,6 +8,8 @@ import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js";
 
 export type {
+  OzowProviderOptions,
+  PayfastProviderOptions,
   PaymentProvider,
   PaymentRequest,
   PaymentResponse,

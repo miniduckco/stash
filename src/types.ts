@@ -27,6 +27,7 @@ export type PaymentRequest = {
     merchantKey?: string;
     passphrase?: string;
   };
+  providerOptions?: PayfastProviderOptions | OzowProviderOptions;
   testMode?: boolean;
   providerData?: Record<string, string | number | boolean | null | undefined>;
 };
@@ -55,4 +56,21 @@ export type WebhookVerifyResult = {
   provider: PaymentProvider;
   isValid: boolean;
   reason?: string;
+};
+
+export type PayfastProviderOptions = {
+  paymentMethod?: string;
+  emailConfirmation?: boolean;
+  confirmationAddress?: string;
+  mPaymentId?: string;
+  itemName?: string;
+  itemDescription?: string;
+};
+
+export type OzowProviderOptions = {
+  selectedBankId?: string;
+  customerIdentityNumber?: string;
+  allowVariableAmount?: boolean;
+  variableAmountMin?: number;
+  variableAmountMax?: number;
 };

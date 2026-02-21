@@ -8,6 +8,11 @@ makePayment(input: PaymentRequest): Promise<PaymentResponse>
 
 Creates a payment request for Ozow or Payfast using a unified payload.
 
+PaymentRequest fields of note:
+
+- `providerOptions`: typed provider-specific options (preferred).
+- `providerData`: advanced escape hatch for raw provider fields.
+
 ## verifyWebhookSignature
 
 ```ts

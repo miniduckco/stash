@@ -2,6 +2,7 @@ import { sha512Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
 import type {
+  OzowProviderOptions,
   PaymentRequest,
   PaymentResponse,
   WebhookVerifyInput,
@@ -60,6 +61,14 @@ const OZOW_RESPONSE_ORDER = [
 
 const OZOW_ALLOWED_FIELDS = new Set(OZOW_ORDER);
 
+const OZOW_PROVIDER_OPTION_FIELDS = {
+  selectedBankId: "SelectedBankId",
+  customerIdentityNumber: "CustomerIdentityNumber",
+  allowVariableAmount: "AllowVariableAmount",
+  variableAmountMin: "VariableAmountMin",
+  variableAmountMax: "VariableAmountMax",
+} as const;
+
 const OZOW_ENDPOINTS = {
   live: "https://api.ozow.com/PostPaymentRequest",
   sandbox: "https://stagingapi.ozow.com/PostPaymentRequest",
@@ -85,6 +94,9 @@ function buildOzowPayload(input: PaymentRequest): Record<string, string> {
   const bankReference =
     input.providerData?.BankReference ?? input.description ?? input.reference;
   payload.BankReference = toStringValue(bankReference);
+
+  const providerOptions = input.providerOptions as OzowProviderOptions | undefined;
+  applyOzowProviderOptions(payload, providerOptions, input.providerData);
 
   if (input.metadata) {
     const entries = Object.entries(input.metadata).slice(0, 5);
@@ -119,11 +131,56 @@ function buildOzowPayload(input: PaymentRequest): Record<string, string> {
       }
       if (value === undefined || value === null) continue;
       if (key === "HashCheck") continue;
+      if (providerOptions && isOzowProviderOptionField(key)) {
+        throw new Error(`providerData overlaps providerOptions: ${key}`);
+      }
       payload[key] = toStringValue(value);
     }
   }
 
   return payload;
+}
+
+function applyOzowProviderOptions(
+  payload: Record<string, string>,
+  options?: OzowProviderOptions,
+  providerData?: Record<string, string | number | boolean | null | undefined>
+): void {
+  if (!options) return;
+
+  for (const fieldKey of Object.values(OZOW_PROVIDER_OPTION_FIELDS)) {
+    if (providerData && fieldKey in providerData) {
+      throw new Error(`providerData overlaps providerOptions: ${fieldKey}`);
+    }
+  }
+
+  if (options.selectedBankId) {
+    payload.SelectedBankId = options.selectedBankId;
+  }
+
+  if (options.customerIdentityNumber) {
+    payload.CustomerIdentityNumber = options.customerIdentityNumber;
+  }
+
+  if (options.allowVariableAmount !== undefined) {
+    payload.AllowVariableAmount = options.allowVariableAmount ? "true" : "false";
+  }
+
+  if (options.allowVariableAmount) {
+    if (options.variableAmountMin === undefined) {
+      throw new Error("variableAmountMin is required when allowVariableAmount is true");
+    }
+    if (options.variableAmountMax === undefined) {
+      throw new Error("variableAmountMax is required when allowVariableAmount is true");
+    }
+    payload.VariableAmountMin = String(options.variableAmountMin);
+    payload.VariableAmountMax = String(options.variableAmountMax);
+  }
+}
+
+function isOzowProviderOptionField(fieldKey: string): boolean {
+  const optionFields = Object.values(OZOW_PROVIDER_OPTION_FIELDS) as string[];
+  return optionFields.includes(fieldKey);
 }
 
 export function buildOzowHashCheck(

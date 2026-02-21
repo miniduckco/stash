@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
-import { buildOzowHashCheck, verifyOzowWebhook } from "../src/providers/ozow.js";
+import {
+  buildOzowHashCheck,
+  makeOzowPayment,
+  verifyOzowWebhook,
+} from "../src/providers/ozow.js";
 
 test("buildOzowHashCheck excludes cellphone and allowVariableAmount false", () => {
   const payload = {
@@ -89,4 +93,47 @@ test("verifyOzowWebhook validates response hash", () => {
   });
 
   assert.equal(result.isValid, true);
+});
+
+test("makeOzowPayment requires variable amount bounds", async () => {
+  await assert.rejects(
+    () =>
+      makeOzowPayment({
+        provider: "ozow",
+        amount: "10.00",
+        reference: "ORDER-1",
+        secrets: {
+          siteCode: "SITE",
+          apiKey: "API",
+          privateKey: "PRIVATE",
+        },
+        providerOptions: {
+          allowVariableAmount: true,
+        },
+      }),
+    /variableAmountMin is required/
+  );
+});
+
+test("makeOzowPayment rejects providerData overlap", async () => {
+  await assert.rejects(
+    () =>
+      makeOzowPayment({
+        provider: "ozow",
+        amount: "10.00",
+        reference: "ORDER-2",
+        secrets: {
+          siteCode: "SITE",
+          apiKey: "API",
+          privateKey: "PRIVATE",
+        },
+        providerOptions: {
+          selectedBankId: "BANK",
+        },
+        providerData: {
+          SelectedBankId: "OTHER",
+        },
+      }),
+    /providerData overlaps providerOptions/
+  );
 });
