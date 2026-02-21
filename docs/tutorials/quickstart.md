@@ -36,7 +36,6 @@ Verify the signature before you update your order.
 - Ozow webhook: `examples/webhook-ozow.ts`
 - Payfast ITN: `examples/webhook-payfast.ts`
 
-## 4) Optional hardening
+## 4) Optional checks
 
-- Payfast ITN hardening: `examples/payfast-itn-hardening.ts`
 - Ozow transaction status: `examples/ozow-status.ts`

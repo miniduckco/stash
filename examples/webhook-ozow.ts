@@ -1,15 +1,18 @@
-import { verifyWebhookSignature } from "@miniduck/stash";
+import { createStash } from "@miniduck/stash";
 
-const result = verifyWebhookSignature({
+const stash = createStash({
   provider: "ozow",
-  rawBody: req.rawBody,
-  secrets: {
+  credentials: {
+    siteCode: process.env.OZOW_SITE_CODE,
+    apiKey: process.env.OZOW_API_KEY,
     privateKey: process.env.OZOW_PRIVATE_KEY,
   },
 });
 
-if (!result.isValid) {
-  res.status(400).send("Invalid signature");
-} else {
-  res.status(200).send("OK");
+const { event } = stash.webhooks.parse({ rawBody: req.rawBody });
+
+if (event.type === "payment.completed") {
+  // update order
 }
+
+res.status(200).send("OK");

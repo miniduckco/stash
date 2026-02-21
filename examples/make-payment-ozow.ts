@@ -1,7 +1,16 @@
-import { makePayment } from "@miniduck/stash";
+import { createStash } from "@miniduck/stash";
 
-const payment = await makePayment({
+const stash = createStash({
   provider: "ozow",
+  credentials: {
+    siteCode: process.env.OZOW_SITE_CODE,
+    apiKey: process.env.OZOW_API_KEY,
+    privateKey: process.env.OZOW_PRIVATE_KEY,
+  },
+  testMode: true,
+});
+
+const payment = await stash.payments.create({
   amount: "249.99",
   currency: "ZAR",
   reference: "ORDER-12345",
@@ -16,12 +25,6 @@ const payment = await makePayment({
     notifyUrl: "https://shop.example.com/payments/webhook",
     errorUrl: "https://shop.example.com/payments/error",
   },
-  secrets: {
-    siteCode: process.env.OZOW_SITE_CODE,
-    apiKey: process.env.OZOW_API_KEY,
-    privateKey: process.env.OZOW_PRIVATE_KEY,
-  },
-  testMode: true,
 });
 
 console.log(payment.redirectUrl);
