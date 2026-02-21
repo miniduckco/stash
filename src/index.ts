@@ -32,6 +32,13 @@ export type {
   WebhookVerifyResult,
 } from "./types.js";
 
+export {
+  buildFormEncoded,
+  parseFormBody,
+  parseFormEncoded,
+  pairsToRecord,
+} from "./internal/form.js";
+
 export async function makePayment(
   input: PaymentRequest
 ): Promise<PaymentResponse> {

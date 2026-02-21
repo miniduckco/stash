@@ -151,6 +151,15 @@ if (!validation.isValid) {
 }
 ```
 
+## Webhook utilities
+
+```ts
+import { buildFormEncoded, parseFormBody } from "@miniduck/stash";
+
+const body = buildFormEncoded({ payment_status: "COMPLETE", amount: 100 });
+const pairs = parseFormBody(body);
+```
+
 ## Provider-specific fields
 
 Pass provider-specific fields via `providerData`:
