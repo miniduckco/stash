@@ -1,4 +1,6 @@
 import type {
+  OzowTransactionQuery,
+  OzowTransactionResult,
   PayfastWebhookValidationInput,
   PayfastWebhookValidationResult,
   PaymentRequest,
@@ -6,7 +8,12 @@ import type {
   WebhookVerifyInput,
   WebhookVerifyResult,
 } from "./types.js";
-import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
+import {
+  getOzowTransaction,
+  getOzowTransactionByReference,
+  makeOzowPayment,
+  verifyOzowWebhook,
+} from "./providers/ozow.js";
 import {
   makePayfastPayment,
   validatePayfastWebhook,
@@ -14,6 +21,8 @@ import {
 } from "./providers/payfast.js";
 
 export type {
+  OzowTransactionQuery,
+  OzowTransactionResult,
   PayfastWebhookValidationInput,
   PayfastWebhookValidationResult,
   PaymentProvider,
@@ -53,4 +62,16 @@ export async function validatePayfastWebhookSignature(
   input: PayfastWebhookValidationInput
 ): Promise<PayfastWebhookValidationResult> {
   return validatePayfastWebhook(input);
+}
+
+export async function getOzowTransactionStatusByReference(
+  input: OzowTransactionQuery
+): Promise<OzowTransactionResult> {
+  return getOzowTransactionByReference(input);
+}
+
+export async function getOzowTransactionStatus(
+  input: OzowTransactionQuery
+): Promise<OzowTransactionResult> {
+  return getOzowTransaction(input);
 }

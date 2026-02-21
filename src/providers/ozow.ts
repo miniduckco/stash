@@ -6,6 +6,8 @@ import type {
   PaymentResponse,
   WebhookVerifyInput,
   WebhookVerifyResult,
+  OzowTransactionQuery,
+  OzowTransactionResult,
 } from "../types.js";
 
 const OZOW_ORDER = [
@@ -63,6 +65,11 @@ const OZOW_ALLOWED_FIELDS = new Set(OZOW_ORDER);
 const OZOW_ENDPOINTS = {
   live: "https://api.ozow.com/PostPaymentRequest",
   sandbox: "https://stagingapi.ozow.com/PostPaymentRequest",
+} as const;
+
+const OZOW_STATUS_ENDPOINTS = {
+  live: "https://api.ozow.com",
+  sandbox: "https://stagingapi.ozow.com",
 } as const;
 
 function buildOzowPayload(input: PaymentRequest): Record<string, string> {
@@ -252,5 +259,88 @@ export function verifyOzowWebhook(
   return {
     provider: "ozow",
     isValid: normalize(received) === normalize(computed),
+  };
+}
+
+function buildOzowStatusUrl(
+  baseUrl: string,
+  path: string,
+  query: Record<string, string>
+): string {
+  const params = new URLSearchParams(query);
+  return `${baseUrl}${path}?${params.toString()}`;
+}
+
+export async function getOzowTransactionByReference(
+  input: OzowTransactionQuery
+): Promise<OzowTransactionResult> {
+  if (!input.transactionReference) {
+    throw new Error("transactionReference is required");
+  }
+
+  const baseUrl = input.testMode
+    ? OZOW_STATUS_ENDPOINTS.sandbox
+    : OZOW_STATUS_ENDPOINTS.live;
+
+  const url = buildOzowStatusUrl(baseUrl, "/GetTransactionByReference", {
+    siteCode: input.siteCode,
+    transactionReference: input.transactionReference,
+    ...(input.testMode ? { isTest: "true" } : {}),
+  });
+
+  const response = await fetch(url, {
+    headers: {
+      ApiKey: input.apiKey,
+      Accept: "application/json",
+    },
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(
+      `Ozow transaction query failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return {
+    transactions: Array.isArray(body) ? body : [],
+    raw: body,
+  };
+}
+
+export async function getOzowTransaction(
+  input: OzowTransactionQuery
+): Promise<OzowTransactionResult> {
+  if (!input.transactionId) {
+    throw new Error("transactionId is required");
+  }
+
+  const baseUrl = input.testMode
+    ? OZOW_STATUS_ENDPOINTS.sandbox
+    : OZOW_STATUS_ENDPOINTS.live;
+
+  const url = buildOzowStatusUrl(baseUrl, "/GetTransaction", {
+    siteCode: input.siteCode,
+    transactionId: input.transactionId,
+    ...(input.testMode ? { isTest: "true" } : {}),
+  });
+
+  const response = await fetch(url, {
+    headers: {
+      ApiKey: input.apiKey,
+      Accept: "application/json",
+    },
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(
+      `Ozow transaction query failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return {
+    transactions: Array.isArray(body) ? body : [],
+    raw: body,
   };
 }
