@@ -125,7 +125,6 @@ export type PaymentRequest = {
     merchantKey?: string;
     passphrase?: string;
   };
-<<<<<<< HEAD
   providerOptions?: ProviderOptions;
   testMode?: boolean;
   providerData?: Record<string, string | number | boolean | null | undefined>;
