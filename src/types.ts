@@ -75,3 +75,16 @@ export type PayfastWebhookValidationResult = {
   ipValid?: boolean;
   reason?: string;
 };
+
+export type OzowTransactionQuery = {
+  siteCode: string;
+  apiKey: string;
+  transactionReference?: string;
+  transactionId?: string;
+  testMode?: boolean;
+};
+
+export type OzowTransactionResult = {
+  transactions: unknown[];
+  raw: unknown;
+};
