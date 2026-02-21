@@ -27,6 +27,8 @@ Payfast
 - `PAYFAST_MERCHANT_KEY`
 - `PAYFAST_PASSPHRASE`
 
+You can copy `.env.example` and fill in the values.
+
 ## 3) Handle webhooks
 
 Verify the signature before you update your order.
