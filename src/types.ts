@@ -56,3 +56,22 @@ export type WebhookVerifyResult = {
   isValid: boolean;
   reason?: string;
 };
+
+export type PayfastWebhookValidationInput = {
+  rawBody: string | Buffer;
+  passphrase?: string;
+  mode?: "live" | "sandbox";
+  validateSignature?: boolean;
+  validateServer?: boolean;
+  validateIp?: boolean;
+  ipAddress?: string;
+  allowedIps?: string[];
+};
+
+export type PayfastWebhookValidationResult = {
+  isValid: boolean;
+  signatureValid: boolean;
+  serverValid?: boolean;
+  ipValid?: boolean;
+  reason?: string;
+};

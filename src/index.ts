@@ -1,13 +1,21 @@
 import type {
+  PayfastWebhookValidationInput,
+  PayfastWebhookValidationResult,
   PaymentRequest,
   PaymentResponse,
   WebhookVerifyInput,
   WebhookVerifyResult,
 } from "./types.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
-import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js";
+import {
+  makePayfastPayment,
+  validatePayfastWebhook,
+  verifyPayfastWebhook,
+} from "./providers/payfast.js";
 
 export type {
+  PayfastWebhookValidationInput,
+  PayfastWebhookValidationResult,
   PaymentProvider,
   PaymentRequest,
   PaymentResponse,
@@ -39,4 +47,10 @@ export function verifyWebhookSignature(
     default:
       throw new Error(`Unsupported provider: ${input.provider}`);
   }
+}
+
+export async function validatePayfastWebhookSignature(
+  input: PayfastWebhookValidationInput
+): Promise<PayfastWebhookValidationResult> {
+  return validatePayfastWebhook(input);
 }

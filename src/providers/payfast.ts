@@ -1,8 +1,11 @@
+import { resolve4 } from "node:dns/promises";
 import { encodePayfastValue } from "../internal/encoding.js";
 import { md5Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
 import type {
+  PayfastWebhookValidationInput,
+  PayfastWebhookValidationResult,
   PaymentRequest,
   PaymentResponse,
   WebhookVerifyInput,
@@ -57,6 +60,23 @@ const PAYFAST_ENDPOINTS = {
   live: "https://www.payfast.co.za/eng/process",
   sandbox: "https://sandbox.payfast.co.za/eng/process",
 } as const;
+
+const PAYFAST_VALIDATION_ENDPOINTS = {
+  live: "https://www.payfast.co.za/eng/query/validate",
+  sandbox: "https://sandbox.payfast.co.za/eng/query/validate",
+} as const;
+
+const PAYFAST_VALID_HOSTS = [
+  "www.payfast.co.za",
+  "w1w.payfast.co.za",
+  "w2w.payfast.co.za",
+  "sandbox.payfast.co.za",
+];
+
+type PayfastParamString = {
+  paramString: string;
+  payload: Record<string, string>;
+};
 
 function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   const merchantId = requireValue(input.secrets.merchantId, "secrets.merchantId");
@@ -155,6 +175,21 @@ export function makePayfastPayment(input: PaymentRequest): PaymentResponse {
   };
 }
 
+function buildPayfastParamString(raw: string): PayfastParamString {
+  const pairs = parseFormEncoded(raw);
+  const payload = pairsToRecord(pairs);
+
+  const params: string[] = [];
+  for (const [key, value] of pairs) {
+    if (key === "signature") {
+      break;
+    }
+    params.push(`${key}=${encodePayfastValue(value)}`);
+  }
+
+  return { payload, paramString: params.join("&") };
+}
+
 export function verifyPayfastWebhook(
   input: WebhookVerifyInput
 ): WebhookVerifyResult {
@@ -172,8 +207,7 @@ export function verifyPayfastWebhook(
     };
   }
 
-  const pairs = parseFormEncoded(raw);
-  const payload = pairsToRecord(pairs);
+  const { payload, paramString } = buildPayfastParamString(raw);
   const signature = payload.signature;
 
   if (!signature) {
@@ -184,23 +218,131 @@ export function verifyPayfastWebhook(
     };
   }
 
-  const params: string[] = [];
-  for (const [key, value] of pairs) {
-    if (key === "signature") {
-      break;
-    }
-    params.push(`${key}=${encodePayfastValue(value)}`);
-  }
-
-  let paramString = params.join("&");
+  let signatureString = paramString;
   if (input.secrets.passphrase) {
-    paramString += `&passphrase=${encodePayfastValue(input.secrets.passphrase)}`;
+    signatureString += `&passphrase=${encodePayfastValue(input.secrets.passphrase)}`;
   }
 
-  const computed = md5Hex(paramString);
+  const computed = md5Hex(signatureString);
 
   return {
     provider: "payfast",
     isValid: signature.toLowerCase() === computed.toLowerCase(),
+  };
+}
+
+async function isPayfastIpAllowed(
+  ipAddress: string,
+  allowedIps?: string[]
+): Promise<boolean> {
+  if (allowedIps && allowedIps.length > 0) {
+    return allowedIps.includes(ipAddress);
+  }
+
+  const resolved = await Promise.all(
+    PAYFAST_VALID_HOSTS.map(async (host) => {
+      try {
+        return await resolve4(host);
+      } catch {
+        return [] as string[];
+      }
+    })
+  );
+
+  const flattened = resolved.flat();
+  return flattened.includes(ipAddress);
+}
+
+async function confirmPayfastServer(
+  paramString: string,
+  mode: "live" | "sandbox"
+): Promise<boolean> {
+  const endpoint = PAYFAST_VALIDATION_ENDPOINTS[mode];
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: paramString,
+  });
+
+  const text = await response.text();
+  return text.trim() === "VALID";
+}
+
+export async function validatePayfastWebhook(
+  input: PayfastWebhookValidationInput
+): Promise<PayfastWebhookValidationResult> {
+  const raw = Buffer.isBuffer(input.rawBody)
+    ? input.rawBody.toString("utf8")
+    : input.rawBody;
+
+  const { payload, paramString } = buildPayfastParamString(raw);
+  const signature = payload.signature;
+
+  if (!signature) {
+    return {
+      isValid: false,
+      signatureValid: false,
+      reason: "missingSignature",
+    };
+  }
+
+  const signatureString = input.passphrase
+    ? `${paramString}&passphrase=${encodePayfastValue(input.passphrase)}`
+    : paramString;
+
+  const signatureValid =
+    signature.toLowerCase() === md5Hex(signatureString).toLowerCase();
+
+  if (input.validateSignature !== false && !signatureValid) {
+    return {
+      isValid: false,
+      signatureValid,
+      reason: "invalidSignature",
+    };
+  }
+
+  let ipValid: boolean | undefined;
+  if (input.validateIp) {
+    if (!input.ipAddress) {
+      return {
+        isValid: false,
+        signatureValid,
+        reason: "missingIpAddress",
+      };
+    }
+
+    ipValid = await isPayfastIpAllowed(input.ipAddress, input.allowedIps);
+    if (!ipValid) {
+      return {
+        isValid: false,
+        signatureValid,
+        ipValid,
+        reason: "invalidIpAddress",
+      };
+    }
+  }
+
+  let serverValid: boolean | undefined;
+  if (input.validateServer !== false) {
+    const mode = input.mode ?? "live";
+    serverValid = await confirmPayfastServer(paramString, mode);
+    if (!serverValid) {
+      return {
+        isValid: false,
+        signatureValid,
+        ipValid,
+        serverValid,
+        reason: "serverConfirmationFailed",
+      };
+    }
+  }
+
+  return {
+    isValid: true,
+    signatureValid,
+    ipValid,
+    serverValid,
   };
 }

@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { encodePayfastValue } from "../src/internal/encoding.js";
-import { verifyPayfastWebhook } from "../src/providers/payfast.js";
+import {
+  validatePayfastWebhook,
+  verifyPayfastWebhook,
+} from "../src/providers/payfast.js";
 
 test("encodePayfastValue uses uppercase hex and plus for spaces", () => {
   const value = "http://example.com/a b";
@@ -42,4 +45,37 @@ test("verifyPayfastWebhook validates ITN signature", () => {
   });
 
   assert.equal(result.isValid, true);
+});
+
+test("validatePayfastWebhook validates signature without server check", async () => {
+  const pairs: Array<[string, string]> = [
+    ["m_payment_id", "ORDER-200"],
+    ["pf_payment_id", "1089251"],
+    ["payment_status", "COMPLETE"],
+    ["item_name", "Test product"],
+    ["amount_gross", "120.00"],
+    ["merchant_id", "10000100"],
+  ];
+
+  const paramString = pairs
+    .map(([key, value]) => `${key}=${encodePayfastValue(value)}`)
+    .join("&");
+
+  const passphrase = "test-pass";
+  const signature = createHash("md5")
+    .update(`${paramString}&passphrase=${encodePayfastValue(passphrase)}`)
+    .digest("hex");
+
+  const rawBody = `${pairs
+    .map(([key, value]) => `${key}=${encodePayfastValue(value)}`)
+    .join("&")}&signature=${signature}`;
+
+  const result = await validatePayfastWebhook({
+    rawBody,
+    passphrase,
+    validateServer: false,
+  });
+
+  assert.equal(result.isValid, true);
+  assert.equal(result.signatureValid, true);
 });

@@ -99,7 +99,10 @@ if (!result.isValid) {
 ### Payfast (ITN)
 
 ```ts
-import { verifyWebhookSignature } from "@miniduck/stash";
+import {
+  validatePayfastWebhookSignature,
+  verifyWebhookSignature,
+} from "@miniduck/stash";
 
 const result = verifyWebhookSignature({
   provider: "payfast",
@@ -111,6 +114,24 @@ const result = verifyWebhookSignature({
 
 if (!result.isValid) {
   res.status(400).send("Invalid signature");
+  return;
+}
+```
+
+#### Payfast ITN hardening (signature + server confirmation)
+
+```ts
+import { validatePayfastWebhookSignature } from "@miniduck/stash";
+
+const validation = await validatePayfastWebhookSignature({
+  rawBody: req.rawBody,
+  passphrase: process.env.PAYFAST_PASSPHRASE,
+  mode: "sandbox",
+  validateServer: true,
+});
+
+if (!validation.isValid) {
+  res.status(400).send("Invalid ITN");
   return;
 }
 ```
