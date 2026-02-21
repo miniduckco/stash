@@ -14,6 +14,8 @@ Payfast
 - `PAYFAST_MERCHANT_KEY`
 - `PAYFAST_PASSPHRASE`
 
+You can copy `.env.example` and fill in the values.
+
 - Make a payment with Ozow: `examples/make-payment-ozow.ts`
 - Make a payment with Payfast: `examples/make-payment-payfast.ts`
 - Verify an Ozow webhook: `examples/webhook-ozow.ts`
