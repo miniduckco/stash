@@ -21,6 +21,10 @@ const payment = await makePayment({
     merchantKey: process.env.PAYFAST_MERCHANT_KEY,
     passphrase: process.env.PAYFAST_PASSPHRASE,
   },
+  providerOptions: {
+    paymentMethod: "cc",
+    emailConfirmation: true,
+  },
   testMode: true,
 });
 

@@ -3,6 +3,7 @@ import { md5Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
 import type {
+  PayfastProviderOptions,
   PaymentRequest,
   PaymentResponse,
   WebhookVerifyInput,
@@ -53,6 +54,15 @@ const PAYFAST_ORDER = [
 const PAYFAST_ALLOWED_FIELDS = new Set([...PAYFAST_ORDER, "signature"]);
 const PAYFAST_SIGNATURE_EXCLUSIONS = new Set(["signature", "setup"]);
 
+const PAYFAST_PROVIDER_OPTION_FIELDS = {
+  paymentMethod: "payment_method",
+  emailConfirmation: "email_confirmation",
+  confirmationAddress: "confirmation_address",
+  mPaymentId: "m_payment_id",
+  itemName: "item_name",
+  itemDescription: "item_description",
+} as const;
+
 const PAYFAST_ENDPOINTS = {
   live: "https://www.payfast.co.za/eng/process",
   sandbox: "https://sandbox.payfast.co.za/eng/process",
@@ -81,23 +91,17 @@ function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   if (input.customer?.email) fields.email_address = input.customer.email;
   if (input.customer?.phone) fields.cell_number = input.customer.phone;
 
-  fields.m_payment_id = input.reference;
   fields.amount = formatAmount(input.amount);
 
-  const providerItemName = input.providerData?.item_name ?? undefined;
-  const providerItemDescription = input.providerData?.item_description ?? undefined;
+  const providerOptions = input.providerOptions as PayfastProviderOptions | undefined;
+  applyPayfastProviderOptions(fields, providerOptions, input.providerData);
 
-  const itemName =
-    (providerItemName !== undefined
-      ? toStringValue(providerItemName as string | number | boolean)
-      : input.description) ?? input.reference;
+  if (!fields.m_payment_id) {
+    fields.m_payment_id = input.reference;
+  }
 
-  fields.item_name = itemName;
-
-  if (providerItemDescription !== undefined) {
-    fields.item_description = toStringValue(
-      providerItemDescription as string | number | boolean
-    );
+  if (!fields.item_name) {
+    fields.item_name = input.description ?? input.reference;
   }
 
   if (input.metadata) {
@@ -114,11 +118,57 @@ function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
       }
       if (value === undefined || value === null) continue;
       if (key === "signature") continue;
+      if (providerOptions && isPayfastProviderOptionField(key)) {
+        throw new Error(`providerData overlaps providerOptions: ${key}`);
+      }
       fields[key] = toStringValue(value);
     }
   }
 
   return fields;
+}
+
+function applyPayfastProviderOptions(
+  fields: Record<string, string>,
+  options?: PayfastProviderOptions,
+  providerData?: Record<string, string | number | boolean | null | undefined>
+): void {
+  if (!options) return;
+
+  for (const fieldKey of Object.values(PAYFAST_PROVIDER_OPTION_FIELDS)) {
+    if (providerData && fieldKey in providerData) {
+      throw new Error(`providerData overlaps providerOptions: ${fieldKey}`);
+    }
+  }
+
+  if (options.paymentMethod) {
+    fields.payment_method = options.paymentMethod;
+  }
+
+  if (options.emailConfirmation !== undefined) {
+    fields.email_confirmation = options.emailConfirmation ? "1" : "0";
+  }
+
+  if (options.confirmationAddress) {
+    fields.confirmation_address = options.confirmationAddress;
+  }
+
+  if (options.mPaymentId) {
+    fields.m_payment_id = options.mPaymentId;
+  }
+
+  if (options.itemName) {
+    fields.item_name = options.itemName;
+  }
+
+  if (options.itemDescription) {
+    fields.item_description = options.itemDescription;
+  }
+}
+
+function isPayfastProviderOptionField(fieldKey: string): boolean {
+  const optionFields = Object.values(PAYFAST_PROVIDER_OPTION_FIELDS) as string[];
+  return optionFields.includes(fieldKey);
 }
 
 export function buildPayfastSignature(

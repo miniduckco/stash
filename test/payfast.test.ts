@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { encodePayfastValue } from "../src/internal/encoding.js";
-import { verifyPayfastWebhook } from "../src/providers/payfast.js";
+import { makePayfastPayment, verifyPayfastWebhook } from "../src/providers/payfast.js";
 
 test("encodePayfastValue uses uppercase hex and plus for spaces", () => {
   const value = "http://example.com/a b";
@@ -42,4 +42,52 @@ test("verifyPayfastWebhook validates ITN signature", () => {
   });
 
   assert.equal(result.isValid, true);
+});
+
+test("makePayfastPayment maps providerOptions", () => {
+  const payment = makePayfastPayment({
+    provider: "payfast",
+    amount: "100.00",
+    reference: "ORDER-1",
+    description: "Order #1",
+    secrets: {
+      merchantId: "merchant",
+      merchantKey: "key",
+    },
+    providerOptions: {
+      paymentMethod: "cc",
+      emailConfirmation: true,
+      confirmationAddress: "ops@example.com",
+      mPaymentId: "MP-1",
+      itemName: "Custom Item",
+      itemDescription: "Custom Desc",
+    },
+  });
+
+  assert.equal(payment.formFields?.payment_method, "cc");
+  assert.equal(payment.formFields?.email_confirmation, "1");
+  assert.equal(payment.formFields?.confirmation_address, "ops@example.com");
+  assert.equal(payment.formFields?.m_payment_id, "MP-1");
+  assert.equal(payment.formFields?.item_name, "Custom Item");
+  assert.equal(payment.formFields?.item_description, "Custom Desc");
+});
+
+test("makePayfastPayment rejects providerData overlap", () => {
+  assert.throws(() => {
+    makePayfastPayment({
+      provider: "payfast",
+      amount: "100.00",
+      reference: "ORDER-2",
+      secrets: {
+        merchantId: "merchant",
+        merchantKey: "key",
+      },
+      providerOptions: {
+        paymentMethod: "cc",
+      },
+      providerData: {
+        payment_method: "dc",
+      },
+    });
+  }, /providerData overlaps providerOptions/);
 });
