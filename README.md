@@ -1,6 +1,6 @@
 # @miniduck/stash
 
-Unified payments SDK for South Africa (Ozow + Payfast).
+Integrate payments in under 15 minutes.
 
 ## Install
 
