@@ -8,6 +8,17 @@ Integrate payments in under 15 minutes.
 npm install @miniduck/stash
 ```
 
+## Getting started
+
+Start with the quickstart tutorial: `docs/tutorials/quickstart.md`.
+
+## Docs (Diataxis)
+
+- Tutorials: `docs/tutorials/quickstart.md`
+- How-to guides: `docs/how-to/README.md`
+- Reference: `docs/reference/api.md`
+- Explanation: `docs/explanation/architecture.md`
+
 ## Make a payment
 
 ### Ozow (API)
