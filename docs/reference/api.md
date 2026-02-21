@@ -36,6 +36,11 @@ Ozow
 - `variableAmountMin` → `VariableAmountMin`
 - `variableAmountMax` → `VariableAmountMax`
 
+Paystack
+- `channels` → `channels`
+
+Note: Paystack expects amounts in minor units and Stash does not convert them.
+
 ## webhooks.parse
 
 ```ts
@@ -43,6 +48,18 @@ webhooks.parse(input: WebhookParseInput): ParsedWebhook
 ```
 
 Verifies and normalizes provider webhook payloads. Throws `StashError` with `code: "invalid_signature"` on verification failure.
+
+## payments.verify
+
+```ts
+payments.verify(input: PaymentVerifyInput): Promise<VerificationResult>
+```
+
+Verifies payment status by reference. Supported providers:
+
+- Ozow ✅
+- Paystack ✅
+- Payfast ❌ (`unsupported_capability`)
 
 ## Payment (canonical)
 
@@ -53,7 +70,7 @@ type Payment = {
   amount: number
   currency: string
   redirectUrl?: string
-  provider: "ozow" | "payfast"
+  provider: "ozow" | "payfast" | "paystack"
   providerRef?: string
   raw?: unknown
 }
@@ -70,7 +87,7 @@ type WebhookEvent = {
     reference: string
     amount?: number
     currency?: string
-    provider: "ozow" | "payfast"
+    provider: "ozow" | "payfast" | "paystack"
     raw: unknown
   }
 }
@@ -81,7 +98,7 @@ type WebhookEvent = {
 ```ts
 type ParsedWebhook = {
   event: WebhookEvent
-  provider: "ozow" | "payfast"
+  provider: "ozow" | "payfast" | "paystack"
   raw: Record<string, unknown>
 }
 ```
