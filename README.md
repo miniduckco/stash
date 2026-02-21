@@ -8,6 +8,10 @@ Unified payments SDK for South Africa (Ozow + Payfast).
 npm install @miniduck/stash
 ```
 
+## Getting started
+
+Start with the quickstart tutorial: `docs/tutorials/quickstart.md`.
+
 ## Docs (Diataxis)
 
 - Tutorials: `docs/tutorials/quickstart.md`
