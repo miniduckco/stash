@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import {
   buildFormEncoded,
-  pairsToRecord,
   parseFormBody,
   parseFormEncoded,
+  pairsToRecord,
 } from "./internal/form.js";
 import { formatAmount } from "./internal/guards.js";
 import { StashError } from "./errors.js";
@@ -20,6 +20,7 @@ import type {
   WebhookVerifyInput,
   WebhookVerifyResult,
 } from "./types.js";
+import { providerAdapters } from "./providers/adapters.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js";
 
@@ -69,7 +70,8 @@ export function createStash(config: StashConfig) {
           secrets: buildSecrets(provider, config.credentials),
         };
 
-        const response = await makePayment(paymentRequest);
+        const adapter = providerAdapters[provider];
+        const response = await adapter.createPayment(paymentRequest);
 
         return {
           id: randomUUID(),
@@ -89,53 +91,29 @@ export function createStash(config: StashConfig) {
         const secrets = buildSecrets(resolvedProvider, config.credentials);
         const rawBody = input.rawBody;
 
-        if (resolvedProvider === "payfast") {
-          const verified = verifyPayfastWebhook({
-            provider: "payfast",
-            rawBody,
-            headers: input.headers,
-            secrets: {
-              passphrase: secrets.passphrase,
-            },
-          });
-
-          if (!verified.isValid) {
-            throw new StashError("invalid_signature", "Invalid Payfast signature");
-          }
-
-          const payload = parseWebhookPayload(rawBody);
-          const event = mapPayfastEvent(payload);
-          return {
-            event,
-            provider: "payfast",
-            raw: payload,
-          };
+        const adapter = providerAdapters[resolvedProvider];
+        if (!adapter) {
+          throw new Error(`Unsupported provider: ${resolvedProvider}`);
         }
 
-        if (resolvedProvider === "ozow") {
-          const verified = verifyOzowWebhook({
-            provider: "ozow",
-            rawBody,
-            headers: input.headers,
-            secrets: {
-              privateKey: secrets.privateKey,
-            },
-          });
+        const parsed = adapter.parseWebhook({
+          rawBody,
+          headers: input.headers,
+          secrets,
+        });
 
-          if (!verified.isValid) {
-            throw new StashError("invalid_signature", "Invalid Ozow signature");
-          }
-
-          const payload = parseWebhookPayload(rawBody);
-          const event = mapOzowEvent(payload);
-          return {
-            event,
-            provider: "ozow",
-            raw: payload,
-          };
+        if (!parsed.isValid) {
+          throw new StashError(
+            "invalid_signature",
+            `Invalid ${resolvedProvider} signature`
+          );
         }
 
-        throw new Error(`Unsupported provider: ${resolvedProvider}`);
+        return {
+          event: parsed.event,
+          provider: resolvedProvider,
+          raw: parsed.raw,
+        };
       },
     },
   };
@@ -170,54 +148,6 @@ function buildSecrets(
   };
 }
 
-function parseWebhookPayload(rawBody: string | Buffer): Record<string, string> {
-  const raw = Buffer.isBuffer(rawBody) ? rawBody.toString("utf8") : rawBody;
-  return pairsToRecord(parseFormEncoded(raw));
-}
-
-function mapPayfastEvent(payload: Record<string, string>): WebhookEvent {
-  const status = (payload.payment_status ?? "").toUpperCase();
-  const type =
-    status === "COMPLETE"
-      ? "payment.completed"
-      : status === "CANCELLED"
-        ? "payment.cancelled"
-        : "payment.failed";
-
-  return {
-    type,
-    data: {
-      provider: "payfast",
-      reference: payload.m_payment_id ?? "",
-      providerRef: payload.pf_payment_id,
-      amount: payload.amount_gross ? Number(payload.amount_gross) : undefined,
-      currency: payload.amount_gross ? "ZAR" : undefined,
-      raw: payload,
-    },
-  };
-}
-
-function mapOzowEvent(payload: Record<string, string>): WebhookEvent {
-  const status = (payload.Status ?? "").toLowerCase();
-  const type =
-    status === "complete"
-      ? "payment.completed"
-      : status === "cancelled"
-        ? "payment.cancelled"
-        : "payment.failed";
-
-  return {
-    type,
-    data: {
-      provider: "ozow",
-      reference: payload.TransactionReference ?? "",
-      providerRef: payload.TransactionId,
-      amount: payload.Amount ? Number(payload.Amount) : undefined,
-      currency: payload.CurrencyCode,
-      raw: payload,
-    },
-  };
-}
 
 /**
  * @deprecated Use createStash({ provider, credentials }).payments.create instead.
