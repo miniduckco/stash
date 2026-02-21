@@ -16,6 +16,7 @@ Use `createStash` and `payments.create` with a configured provider.
 
 - Ozow: `examples/make-payment-ozow.ts`
 - Payfast: `examples/make-payment-payfast.ts`
+- Paystack: `examples/make-payment-paystack.ts`
 
 ### Parse webhooks
 
@@ -23,12 +24,17 @@ Use `stash.webhooks.parse({ rawBody, headers })` and handle canonical events.
 
 - Raw-body patterns: `docs/how-to/webhooks.md`
 - Examples: `examples/webhook-ozow.ts`, `examples/webhook-payfast.ts`
+- Paystack webhook: `examples/webhook-paystack.ts`
 
 ### Optional Ozow status check
 
 Verify payment status after webhook processing.
 
 - `examples/ozow-status.ts`
+
+### Optional payment verification
+
+- `payments.verify` is supported for Ozow and Paystack
 
 ## Troubleshooting
 
