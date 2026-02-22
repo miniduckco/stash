@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { marked, type Tokens, type Renderer } from 'marked';
 
-const repoRoot = path.resolve(process.cwd(), '..');
+const repoRoot = process.cwd();
 const docsRoot = path.join(repoRoot, 'docs');
 const docRoot = path.join(repoRoot, 'doc');
 const examplesRoot = path.join(repoRoot, 'examples');
