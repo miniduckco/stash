@@ -6,6 +6,36 @@
 	import CardDescription from '$lib/components/ui/card-description.svelte';
 	import CardHeader from '$lib/components/ui/card-header.svelte';
 	import CardTitle from '$lib/components/ui/card-title.svelte';
+	import { onDestroy } from 'svelte';
+
+	const quickstartSnippet = `npm install @miniduckco/stash\n\nimport { createStash } from "@miniduckco/stash";\n\nconst stash = createStash({\n  provider: "ozow",\n  credentials: {\n    siteCode: process.env.OZOW_SITE_CODE,\n    apiKey: process.env.OZOW_API_KEY,\n    privateKey: process.env.OZOW_PRIVATE_KEY\n  },\n  testMode: true\n});\n\nconst payment = await stash.payments.create({\n  amount: "249.99",\n  currency: "ZAR",\n  reference: "ORDER-12345",\n  customer: {\n    firstName: "Lebo",\n    lastName: "Nkosi",\n    phone: "0821234567"\n  },\n  urls: {\n    returnUrl: "https://shop.example.com/payments/return",\n    cancelUrl: "https://shop.example.com/payments/cancel",\n    notifyUrl: "https://shop.example.com/payments/webhook",\n    errorUrl: "https://shop.example.com/payments/error"\n  }\n});\n\nconsole.log(payment.redirectUrl);`;
+
+	let copied = false;
+	let copyTimer: ReturnType<typeof setTimeout> | undefined;
+
+	const copyQuickstart = async () => {
+		try {
+			await navigator.clipboard.writeText(quickstartSnippet);
+			copied = true;
+			clearTimeout(copyTimer);
+			copyTimer = setTimeout(() => {
+				copied = false;
+			}, 2000);
+		} catch (error) {
+			const selection = window.getSelection();
+			selection?.removeAllRanges();
+			const codeBlock = document.querySelector('[data-quickstart-code]');
+			if (codeBlock) {
+				const range = document.createRange();
+				range.selectNodeContents(codeBlock);
+				selection?.addRange(range);
+			}
+		}
+	};
+
+	onDestroy(() => {
+		clearTimeout(copyTimer);
+	});
 </script>
 
 <svelte:head>
@@ -107,6 +137,20 @@
 				</ol>
 				<div class="mt-6">
 					<Button href="/docs/tutorials/quickstart" variant="secondary">Read the quickstart</Button>
+				</div>
+				<div class="mt-6 rounded-2xl border border-border bg-background/80 p-4">
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+						<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Quickstart snippet</p>
+						<Button variant="outline" size="sm" on:click={copyQuickstart}>
+							{copied ? 'Copied' : 'Copy'}
+						</Button>
+					</div>
+					<pre
+						class="mt-3 max-h-64 overflow-auto rounded-xl border border-border bg-white/80 p-3 text-xs text-foreground"
+						data-quickstart-code
+					>
+<code>{quickstartSnippet}</code>
+					</pre>
 				</div>
 			</CardContent>
 		</Card>

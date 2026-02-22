@@ -12,6 +12,7 @@ COPY doc ./doc
 RUN npm run build --prefix site
 
 ENV NODE_ENV=production
+ENV PORT=5173
 
 EXPOSE 5173
 
