@@ -30,6 +30,8 @@ import { makePaystackPayment, verifyPaystackWebhook } from "./providers/paystack
 export type {
   OzowProviderOptions,
   ParsedWebhook,
+  LogEvent,
+  Logger,
   Payment,
   PaymentCreateInput,
   PaymentProvider,

@@ -49,6 +49,33 @@ export type StashConfig = {
   defaults?: {
     currency?: string;
   };
+  logger?: Logger;
+};
+
+export type LogEvent = {
+  event: string;
+  timestamp: string;
+  provider: PaymentProvider;
+  action: "create" | "verify" | "parse";
+  stage: "request" | "response" | "error";
+  correlation_id: string;
+  status: "success" | "failure";
+  duration_ms?: number;
+  metadata?: {
+    amount?: number | string;
+    currency?: string;
+    reference?: string;
+    provider_ref?: string;
+    testMode?: boolean;
+  };
+  error?: {
+    code: string;
+    message: string;
+  };
+};
+
+export type Logger = {
+  log: (event: LogEvent) => void;
 };
 
 export type PaymentCreateInput = {
@@ -81,6 +108,7 @@ export type Payment = {
   redirectUrl?: string;
   provider: PaymentProvider;
   providerRef?: string;
+  correlationId?: string;
   raw?: unknown;
 };
 
@@ -92,6 +120,7 @@ export type VerificationResult = {
   provider: PaymentProvider;
   status: "pending" | "paid" | "failed" | "unknown";
   providerRef?: string;
+  correlationId?: string;
   raw?: unknown;
 };
 
@@ -117,6 +146,7 @@ export type WebhookParseInput = {
 export type ParsedWebhook = {
   event: WebhookEvent;
   provider: PaymentProvider;
+  correlationId?: string;
   raw: Record<string, unknown>;
 };
 
