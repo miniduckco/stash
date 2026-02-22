@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add canonical structured logging with correlation IDs for payment actions.
+
 ## 0.1.1
 
 - Add SvelteKit site under `site/` with brand palette and typography.

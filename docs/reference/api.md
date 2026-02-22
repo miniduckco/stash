@@ -15,6 +15,30 @@ Creates a configured Stash client with capability surfaces for payments and webh
 
 `testMode: true` routes requests to provider sandbox endpoints. Set it to `false` for live production traffic.
 
+### Structured logging
+
+Stash can emit canonical, structured log events for each payment action. Provide a logger when you create the client:
+
+```ts
+const stash = createStash({
+  provider: "payfast",
+  credentials: {
+    merchantId: process.env.PAYFAST_MERCHANT_ID,
+    merchantKey: process.env.PAYFAST_MERCHANT_KEY,
+  },
+  testMode: true,
+  logger: {
+    log: (event) => {
+      // Send to your logging pipeline
+      console.log(event);
+    },
+  },
+});
+```
+
+Each event includes a `correlation_id`, `event` name (for example, `payments.create.request`), and safe metadata such as
+amount, currency, and reference. Stash never logs credentials or raw webhook payloads.
+
 ## payments.create
 
 ```ts
@@ -65,6 +89,18 @@ Verifies payment status by reference. Supported providers:
 - Paystack ✅
 - Payfast ❌ (`unsupported_capability`)
 
+## VerificationResult
+
+```ts
+type VerificationResult = {
+  provider: "ozow" | "payfast" | "paystack"
+  status: "pending" | "paid" | "failed" | "unknown"
+  providerRef?: string
+  correlationId?: string
+  raw?: unknown
+}
+```
+
 ## Payment (canonical)
 
 ```ts
@@ -76,6 +112,7 @@ type Payment = {
   redirectUrl?: string
   provider: "ozow" | "payfast" | "paystack"
   providerRef?: string
+  correlationId?: string
   raw?: unknown
 }
 ```
@@ -103,6 +140,7 @@ type WebhookEvent = {
 type ParsedWebhook = {
   event: WebhookEvent
   provider: "ozow" | "payfast" | "paystack"
+  correlationId?: string
   raw: Record<string, unknown>
 }
 ```

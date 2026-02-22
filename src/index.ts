@@ -21,6 +21,7 @@ import type {
   WebhookParseInput,
   WebhookVerifyInput,
   WebhookVerifyResult,
+  LogEvent,
 } from "./types.js";
 import { providerAdapters } from "./providers/adapters.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
@@ -30,6 +31,8 @@ import { makePaystackPayment, verifyPaystackWebhook } from "./providers/paystack
 export type {
   OzowProviderOptions,
   ParsedWebhook,
+  LogEvent,
+  Logger,
   Payment,
   PaymentCreateInput,
   PaymentProvider,
@@ -54,12 +57,38 @@ export { buildFormEncoded, parseFormBody, parseFormEncoded, pairsToRecord } from
 export function createStash(config: StashConfig) {
   const provider = config.provider;
   const testMode = config.testMode ?? false;
+  const logger = config.logger;
+
+  const emit = (event: Omit<LogEvent, "timestamp"> & { timestamp?: string }) => {
+    if (!logger) return;
+    logger.log({
+      timestamp: new Date().toISOString(),
+      ...event,
+    });
+  };
 
   return {
     payments: {
       create: async (input: PaymentCreateInput): Promise<Payment> => {
+        const correlationId = randomUUID();
+        const startedAt = Date.now();
         const currency = input.currency ?? config.defaults?.currency ?? "ZAR";
         const amountNumber = Number(formatAmount(input.amount));
+
+        emit({
+          event: "payments.create.request",
+          provider,
+          action: "create",
+          stage: "request",
+          correlation_id: correlationId,
+          status: "success",
+          metadata: {
+            amount: input.amount,
+            currency,
+            reference: input.reference,
+            testMode,
+          },
+        });
 
         const paymentRequest: PaymentRequest = {
           provider,
@@ -77,44 +106,194 @@ export function createStash(config: StashConfig) {
         };
 
         const adapter = providerAdapters[provider];
-        const response = await adapter.createPayment(paymentRequest);
+        try {
+          const response = await adapter.createPayment(paymentRequest);
+          const payment = {
+            id: randomUUID(),
+            status: "pending",
+            amount: amountNumber,
+            currency,
+            redirectUrl: response.redirectUrl,
+            provider,
+            providerRef: response.paymentRequestId,
+            correlationId,
+            raw: response.raw ?? response,
+          } satisfies Payment;
 
-        return {
-          id: randomUUID(),
-          status: "pending",
-          amount: amountNumber,
-          currency,
-          redirectUrl: response.redirectUrl,
-          provider,
-          providerRef: response.paymentRequestId,
-          raw: response.raw ?? response,
-        };
+          emit({
+            event: "payments.create.response",
+            provider,
+            action: "create",
+            stage: "response",
+            correlation_id: correlationId,
+            status: "success",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              amount: amountNumber,
+              currency,
+              reference: input.reference,
+              provider_ref: response.paymentRequestId,
+              testMode,
+            },
+          });
+
+          return payment;
+        } catch (error) {
+          emit({
+            event: "payments.create.error",
+            provider,
+            action: "create",
+            stage: "error",
+            correlation_id: correlationId,
+            status: "failure",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              amount: input.amount,
+              currency,
+              reference: input.reference,
+              testMode,
+            },
+            error: {
+              code: error instanceof StashError ? error.code : "unknown",
+              message: error instanceof Error ? error.message : "Unknown error",
+            },
+          });
+          throw error;
+        }
       },
       verify: async (input: PaymentVerifyInput): Promise<VerificationResult> => {
+        const correlationId = randomUUID();
+        const startedAt = Date.now();
+
+        emit({
+          event: "payments.verify.request",
+          provider,
+          action: "verify",
+          stage: "request",
+          correlation_id: correlationId,
+          status: "success",
+          metadata: {
+            reference: input.reference,
+            testMode,
+          },
+        });
+
         const adapter = providerAdapters[provider];
         if (!adapter?.verifyPayment) {
-          throw new StashError(
+          const error = new StashError(
             "unsupported_capability",
             `payments.verify is not supported for ${provider}`
           );
+          emit({
+            event: "payments.verify.error",
+            provider,
+            action: "verify",
+            stage: "error",
+            correlation_id: correlationId,
+            status: "failure",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              reference: input.reference,
+              testMode,
+            },
+            error: {
+              code: error.code,
+              message: error.message,
+            },
+          });
+          throw error;
         }
 
-        return adapter.verifyPayment({
-          reference: input.reference,
-          secrets: buildSecrets(provider, config.credentials),
-          testMode,
-        });
+        try {
+          const result = await adapter.verifyPayment({
+            reference: input.reference,
+            secrets: buildSecrets(provider, config.credentials),
+            testMode,
+          });
+
+          const enriched = {
+            ...result,
+            correlationId,
+          } satisfies VerificationResult;
+
+          emit({
+            event: "payments.verify.response",
+            provider,
+            action: "verify",
+            stage: "response",
+            correlation_id: correlationId,
+            status: "success",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              reference: input.reference,
+              provider_ref: result.providerRef,
+              testMode,
+            },
+          });
+
+          return enriched;
+        } catch (error) {
+          emit({
+            event: "payments.verify.error",
+            provider,
+            action: "verify",
+            stage: "error",
+            correlation_id: correlationId,
+            status: "failure",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              reference: input.reference,
+              testMode,
+            },
+            error: {
+              code: error instanceof StashError ? error.code : "unknown",
+              message: error instanceof Error ? error.message : "Unknown error",
+            },
+          });
+          throw error;
+        }
       },
     },
     webhooks: {
       parse: (input: WebhookParseInput): ParsedWebhook => {
+        const correlationId = randomUUID();
+        const startedAt = Date.now();
         const resolvedProvider = input.provider ?? provider;
         const secrets = buildSecrets(resolvedProvider, config.credentials);
         const rawBody = input.rawBody;
 
+        emit({
+          event: "webhooks.parse.request",
+          provider: resolvedProvider,
+          action: "parse",
+          stage: "request",
+          correlation_id: correlationId,
+          status: "success",
+          metadata: {
+            testMode,
+          },
+        });
+
         const adapter = providerAdapters[resolvedProvider];
         if (!adapter) {
-          throw new Error(`Unsupported provider: ${resolvedProvider}`);
+          const error = new Error(`Unsupported provider: ${resolvedProvider}`);
+          emit({
+            event: "webhooks.parse.error",
+            provider: resolvedProvider,
+            action: "parse",
+            stage: "error",
+            correlation_id: correlationId,
+            status: "failure",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              testMode,
+            },
+            error: {
+              code: "unsupported_provider",
+              message: error.message,
+            },
+          });
+          throw error;
         }
 
         const parsed = adapter.parseWebhook({
@@ -124,17 +303,54 @@ export function createStash(config: StashConfig) {
         });
 
         if (!parsed.isValid) {
-          throw new StashError(
+          const error = new StashError(
             "invalid_signature",
             `Invalid ${resolvedProvider} signature`
           );
+          emit({
+            event: "webhooks.parse.error",
+            provider: resolvedProvider,
+            action: "parse",
+            stage: "error",
+            correlation_id: correlationId,
+            status: "failure",
+            duration_ms: Date.now() - startedAt,
+            metadata: {
+              testMode,
+            },
+            error: {
+              code: error.code,
+              message: error.message,
+            },
+          });
+          throw error;
         }
 
-        return {
+        const response = {
           event: parsed.event,
           provider: resolvedProvider,
+          correlationId,
           raw: parsed.raw,
-        };
+        } satisfies ParsedWebhook;
+
+        emit({
+          event: "webhooks.parse.response",
+          provider: resolvedProvider,
+          action: "parse",
+          stage: "response",
+          correlation_id: correlationId,
+          status: "success",
+          duration_ms: Date.now() - startedAt,
+          metadata: {
+            amount: parsed.event.data.amount,
+            currency: parsed.event.data.currency,
+            reference: parsed.event.data.reference,
+            provider_ref: parsed.event.data.providerRef,
+            testMode,
+          },
+        });
+
+        return response;
       },
     },
   };
