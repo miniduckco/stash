@@ -8,6 +8,7 @@ RUN npm ci --prefix site
 COPY site ./site
 COPY docs ./docs
 COPY doc ./doc
+COPY CHANGELOG.md ./CHANGELOG.md
 
 RUN npm run build --prefix site
 
