@@ -16,6 +16,10 @@ Choose a provider and use the unified `createStash` API.
 - Payfast example: [`examples/make-payment-payfast.ts`](../../examples/make-payment-payfast.ts)
 - Paystack example: [`examples/make-payment-paystack.ts`](../../examples/make-payment-paystack.ts)
 
+### Test mode
+
+Use `testMode: true` to target sandbox endpoints during local development. Set it to `false` for live production traffic.
+
 ### Required environment variables
 
 Ozow

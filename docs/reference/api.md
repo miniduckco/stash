@@ -11,6 +11,10 @@ createStash(config: StashConfig): {
 
 Creates a configured Stash client with capability surfaces for payments and webhooks.
 
+### Test mode
+
+`testMode: true` routes requests to provider sandbox endpoints. Set it to `false` for live production traffic.
+
 ## payments.create
 
 ```ts
