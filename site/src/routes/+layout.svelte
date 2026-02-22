@@ -6,6 +6,7 @@
 	const navLinks = [
 		{ label: 'Home', href: '/', external: false },
 		{ label: 'Docs', href: '/docs', external: false },
+		{ label: 'Changelog', href: 'https://github.com/miniduckco/stash/blob/main/CHANGELOG.md', external: true },
 		{ label: 'Examples', href: 'https://github.com/miniduckco/stash/tree/main/examples', external: true },
 		{ label: 'API', href: '/docs/reference/api', external: false }
 	];
