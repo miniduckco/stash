@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.2
+
 - Add canonical structured logging with correlation IDs for payment actions.
 
 ## 0.1.1
