@@ -1,7 +1,6 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/stores';
-	import favicon from '$lib/assets/favicon.svg';
 	import Button from '$lib/components/ui/button.svelte';
 
 	const navLinks = [
@@ -16,9 +15,9 @@
 	let { children } = $props();
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+	<svelte:head>
+	<link rel="icon" href="/favicon.png" />
+	</svelte:head>
 
 <div class="min-h-screen bg-background text-foreground">
 	<header class="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur">
