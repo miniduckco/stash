@@ -8,7 +8,9 @@
 	import CardTitle from '$lib/components/ui/card-title.svelte';
 	import { onDestroy } from 'svelte';
 
-	const quickstartSnippet = `npm install @miniduckco/stash\n\nimport { createStash } from "@miniduckco/stash";\n\nconst stash = createStash({\n  provider: "ozow",\n  credentials: {\n    siteCode: process.env.OZOW_SITE_CODE,\n    apiKey: process.env.OZOW_API_KEY,\n    privateKey: process.env.OZOW_PRIVATE_KEY\n  },\n  testMode: true\n});\n\nconst payment = await stash.payments.create({\n  amount: "249.99",\n  currency: "ZAR",\n  reference: "ORDER-12345",\n  customer: {\n    firstName: "Lebo",\n    lastName: "Nkosi",\n    phone: "0821234567"\n  },\n  urls: {\n    returnUrl: "https://shop.example.com/payments/return",\n    cancelUrl: "https://shop.example.com/payments/cancel",\n    notifyUrl: "https://shop.example.com/payments/webhook",\n    errorUrl: "https://shop.example.com/payments/error"\n  }\n});\n\nconsole.log(payment.redirectUrl);`;
+	const quickstartShellSnippet = `npm install @miniduckco/stash`;
+	const quickstartCodeSnippet = `import { createStash } from "@miniduckco/stash";\n\nconst stash = createStash({\n  provider: "ozow",\n  credentials: {\n    siteCode: process.env.OZOW_SITE_CODE,\n    apiKey: process.env.OZOW_API_KEY,\n    privateKey: process.env.OZOW_PRIVATE_KEY\n  },\n  testMode: true\n});\n\nconst payment = await stash.payments.create({\n  amount: "249.99",\n  currency: "ZAR",\n  reference: "ORDER-12345",\n  customer: {\n    firstName: "Lebo",\n    lastName: "Nkosi",\n    phone: "0821234567"\n  },\n  urls: {\n    returnUrl: "https://shop.example.com/payments/return",\n    cancelUrl: "https://shop.example.com/payments/cancel",\n    notifyUrl: "https://shop.example.com/payments/webhook",\n    errorUrl: "https://shop.example.com/payments/error"\n  }\n});\n\nconsole.log(payment.redirectUrl);`;
+	const quickstartSnippet = `${quickstartShellSnippet}\n\n${quickstartCodeSnippet}`;
 
 	let copied = false;
 	let copyTimer: ReturnType<typeof setTimeout> | undefined;
@@ -164,12 +166,14 @@
 							{copied ? 'Copied' : 'Copy'}
 						</Button>
 					</div>
-					<pre
-						class="mt-3 max-h-64 overflow-auto rounded-xl border border-border bg-white/80 p-3 text-xs text-foreground"
-						data-quickstart-code
-					>
-<code>{quickstartSnippet}</code>
-					</pre>
+					<div class="mt-3 space-y-3" data-quickstart-code>
+						<pre class="overflow-auto rounded-xl border border-border bg-black/90 p-3 text-xs font-mono text-emerald-100">
+<code>$ {quickstartShellSnippet}</code>
+						</pre>
+						<pre class="max-h-64 overflow-auto rounded-xl border border-border bg-black/90 p-3 text-xs font-mono text-emerald-100">
+<code>{quickstartCodeSnippet}</code>
+						</pre>
+					</div>
 				</div>
 			</CardContent>
 		</Card>
