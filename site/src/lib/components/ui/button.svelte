@@ -34,11 +34,11 @@
 </script>
 
 {#if href}
-	<a class={cn(buttonVariants({ variant, size }), className)} href={href}>
-		<slot />
-	</a>
-{:else}
-	<button class={cn(buttonVariants({ variant, size }), className)} type={type}>
-		<slot />
-	</button>
-{/if}
+		<a class={cn(buttonVariants({ variant, size }), className)} href={href} {...$$restProps}>
+			<slot />
+		</a>
+	{:else}
+		<button class={cn(buttonVariants({ variant, size }), className)} type={type} {...$$restProps}>
+			<slot />
+		</button>
+	{/if}
