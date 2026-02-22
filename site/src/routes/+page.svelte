@@ -14,8 +14,27 @@
 	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const copyQuickstart = async () => {
+		const text = quickstartSnippet;
+		const legacyCopy = () => {
+			const textarea = document.createElement("textarea");
+			textarea.value = text;
+			textarea.setAttribute("readonly", "true");
+			textarea.style.position = "absolute";
+			textarea.style.left = "-9999px";
+			document.body.appendChild(textarea);
+			textarea.select();
+			const success = document.execCommand("copy");
+			document.body.removeChild(textarea);
+			return success;
+		};
+
 		try {
-			await navigator.clipboard.writeText(quickstartSnippet);
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(text);
+			} else if (!legacyCopy()) {
+				throw new Error("Clipboard unavailable");
+			}
+
 			copied = true;
 			clearTimeout(copyTimer);
 			copyTimer = setTimeout(() => {
