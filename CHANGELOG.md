@@ -9,6 +9,7 @@
 - Add Dockerfile for local preview on port 5173.
 - Fix docs links to point to docs routes and GitHub examples.
 - Update package scope to `@miniduckco/stash` and refresh description.
+- Fix test runner invocation in CI to avoid glob expansion issues.
 
 - Add `createStash` with capability surfaces for payments and webhooks.
 - Return canonical `Payment` and `WebhookEvent` models.
