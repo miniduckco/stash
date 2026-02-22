@@ -26,6 +26,24 @@ Runnable examples live in `examples/`:
 
 - Index: `examples/README.md`
 
+## Site (SvelteKit)
+
+The landing page + docs site lives in `site/` and renders markdown directly from `docs/`.
+
+Local dev:
+
+```bash
+npm install --prefix site
+npm run dev --prefix site -- --host 0.0.0.0 --port 5173
+```
+
+Docker preview:
+
+```bash
+docker build -t stash-site .
+docker run --rm -p 5173:5173 stash-site
+```
+
 ## Providers and operations
 
 Providers
