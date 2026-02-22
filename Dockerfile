@@ -9,6 +9,10 @@ COPY site ./site
 COPY docs ./docs
 COPY doc ./doc
 
+RUN npm run build --prefix site
+
+ENV NODE_ENV=production
+
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--prefix", "site", "--", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["node", "site/build"]
