@@ -45,6 +45,12 @@ jobs:
             awk -v ver="$VERSION" 'BEGIN{flag=0} $0 ~ "^## " ver {flag=1; next} /^## /{flag=0} flag {print}' CHANGELOG.md
           } > release_notes.txt
 
+      - name: Configure npm auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
