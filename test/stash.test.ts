@@ -25,6 +25,37 @@ test("createStash payments.create returns canonical payment", async () => {
   assert.equal(payment.provider, "payfast");
   assert.match(payment.id, /^[0-9a-f-]{36}$/i);
   assert.ok(payment.redirectUrl);
+  assert.match(payment.correlationId ?? "", /^[0-9a-f-]{36}$/i);
+});
+
+test("createStash emits canonical logs for payments.create", async () => {
+  const events: Array<Record<string, unknown>> = [];
+  const stash = createStash({
+    provider: "payfast",
+    credentials: {
+      merchantId: "merchant",
+      merchantKey: "key",
+    },
+    testMode: true,
+    logger: {
+      log: (event) => events.push(event as Record<string, unknown>),
+    },
+  });
+
+  const payment = await stash.payments.create({
+    amount: "100.00",
+    currency: "ZAR",
+    reference: "ORDER-1",
+  });
+
+  assert.equal(events.length, 2);
+  assert.equal(events[0].event, "payments.create.request");
+  assert.equal(events[1].event, "payments.create.response");
+  assert.equal(events[0].provider, "payfast");
+  assert.equal(events[1].provider, "payfast");
+  assert.equal(events[0].correlation_id, payment.correlationId);
+  assert.equal(events[1].correlation_id, payment.correlationId);
+  assert.equal((events[1].metadata as { testMode?: boolean }).testMode, true);
 });
 
 test("createStash payments.create maps ozow response", async () => {
@@ -155,6 +186,7 @@ test("webhooks.parse returns canonical event for payfast", () => {
   assert.equal(parsed.event.type, "payment.completed");
   assert.equal(parsed.event.data.reference, "ORDER-100");
   assert.equal(parsed.provider, "payfast");
+  assert.match(parsed.correlationId ?? "", /^[0-9a-f-]{36}$/i);
 });
 
 test("webhooks.parse throws invalid_signature for payfast", () => {
@@ -208,6 +240,7 @@ test("webhooks.parse returns canonical event for paystack", () => {
   assert.equal(parsed.provider, "paystack");
   assert.equal(parsed.event.type, "payment.completed");
   assert.equal(parsed.event.data.reference, "REF-3");
+  assert.match(parsed.correlationId ?? "", /^[0-9a-f-]{36}$/i);
 });
 
 test("payments.verify throws unsupported_capability for payfast", async () => {
@@ -250,6 +283,7 @@ test("payments.verify returns paid for paystack", async () => {
 
   const result = await stash.payments.verify({ reference: "REF-1" });
   assert.equal(result.status, "paid");
+  assert.match(result.correlationId ?? "", /^[0-9a-f-]{36}$/i);
 
   globalThis.fetch = originalFetch;
 });
