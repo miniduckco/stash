@@ -26,6 +26,11 @@ Runnable examples live in `examples/`:
 
 - Index: `examples/README.md`
 
+## Observability
+
+Structured logging (opt-in) emits canonical events with correlation IDs and safe metadata. See
+[Structured logging](docs/reference/api.md#structured-logging).
+
 ## Site (SvelteKit)
 
 The landing page + docs site lives in `site/` and renders markdown directly from `docs/`.

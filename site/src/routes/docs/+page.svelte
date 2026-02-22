@@ -67,6 +67,19 @@
 			<a class="block text-secondary hover:underline" href="/docs/explanation/architecture">Architecture</a>
 		</div>
 	</div>
+
+	<div class="rounded-2xl border border-border bg-white/70 p-6 shadow-sm md:col-span-2">
+		<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Structured logging</p>
+		<h2 class="mt-3 text-2xl font-semibold text-foreground">Canonical events with correlation IDs.</h2>
+		<p class="mt-2 text-sm text-muted-foreground">
+			Emit safe, structured log lines for every payment action with a pluggable logger.
+		</p>
+		<div class="mt-4 space-y-2 text-sm">
+			<a class="block text-secondary hover:underline" href="/docs/reference/api#structured-logging">
+				Read structured logging
+			</a>
+		</div>
+	</div>
 </section>
 
 <section class="mt-10 rounded-3xl border border-border bg-white/70 p-8 shadow-sm">

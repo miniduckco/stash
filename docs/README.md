@@ -7,3 +7,6 @@ This documentation follows the Diataxis framework:
 - Reference: [API](reference/api.md)
 - Explanation: [Architecture](explanation/architecture.md)
 - Skills quick reference: [Skill quick reference](../doc/skill.md)
+
+Structured logging is available via a pluggable logger; see
+[Structured logging](reference/api.md#structured-logging).
