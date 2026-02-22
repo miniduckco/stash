@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.1.1
+
+- Add SvelteKit site under `site/` with brand palette and typography.
+- Build a landing page and docs hub that render markdown from `docs/`.
+- Add Dockerfile for local preview on port 5173.
+- Fix docs links to point to docs routes and GitHub examples.
+- Update package scope to `@miniduckco/stash` and refresh description.
+
 - Add `createStash` with capability surfaces for payments and webhooks.
 - Return canonical `Payment` and `WebhookEvent` models.
 - Add providerOptions typing and overlap validation.
