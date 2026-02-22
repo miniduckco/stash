@@ -16,7 +16,6 @@
 	<div class="absolute inset-0 bg-noise opacity-60"></div>
 	<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(196,150,122,0.35),_transparent_55%)]"></div>
 	<div class="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-20">
-		<Badge>Unified payments SDK</Badge>
 		<div class="max-w-3xl">
 			<h1 class="text-4xl font-semibold leading-tight text-foreground md:text-6xl">
 				Integrate payments. Switch once.

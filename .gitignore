@@ -1,4 +1,6 @@
 AGENTS.md
 node_modules/
 dist/
+.kamal/
 .svelte-kit/
+config/deploy.yml
