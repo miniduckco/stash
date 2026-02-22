@@ -12,9 +12,9 @@ npm install @miniduck/stash
 
 Choose a provider and use the unified `createStash` API.
 
-- Ozow example: `examples/make-payment-ozow.ts`
-- Payfast example: `examples/make-payment-payfast.ts`
-- Paystack example: `examples/make-payment-paystack.ts`
+- Ozow example: [`examples/make-payment-ozow.ts`](../../examples/make-payment-ozow.ts)
+- Payfast example: [`examples/make-payment-payfast.ts`](../../examples/make-payment-payfast.ts)
+- Paystack example: [`examples/make-payment-paystack.ts`](../../examples/make-payment-paystack.ts)
 
 ### Required environment variables
 
@@ -31,18 +31,18 @@ Payfast
 Paystack
 - `PAYSTACK_SECRET_KEY`
 
-You can copy `.env.example` and fill in the values.
+You can copy [`.env.example`](../../.env.example) and fill in the values.
 
 ## 3) Handle webhooks
 
 Verify the signature before you update your order.
 
-- Ozow webhook: `examples/webhook-ozow.ts`
-- Payfast ITN: `examples/webhook-payfast.ts`
-- Paystack webhook: `examples/webhook-paystack.ts`
+- Ozow webhook: [`examples/webhook-ozow.ts`](../../examples/webhook-ozow.ts)
+- Payfast ITN: [`examples/webhook-payfast.ts`](../../examples/webhook-payfast.ts)
+- Paystack webhook: [`examples/webhook-paystack.ts`](../../examples/webhook-paystack.ts)
 
 ## 4) Optional checks
 
-- Ozow transaction status: `examples/ozow-status.ts`
+- Ozow transaction status: [`examples/ozow-status.ts`](../../examples/ozow-status.ts)
 
 Paystack amounts must be provided in minor units.

@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	:root {
+		--background: #f4f3ee;
+		--foreground: #1c2430;
+		--primary: #1c2430;
+		--primary-foreground: #f4f3ee;
+		--secondary: #c4967a;
+		--secondary-foreground: #1c2430;
+		--muted: #e7e3da;
+		--muted-foreground: #5a6370;
+		--accent: #c4967a;
+		--accent-foreground: #1c2430;
+		--border: #ded8cc;
+		--ring: #c4967a;
+	}
+
+	* {
+		@apply border-border;
+	}
+
+	body {
+		@apply bg-background text-foreground antialiased;
+		font-family: 'Figtree', system-ui, sans-serif;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4 {
+		font-family: 'Source Serif 4', serif;
+	}
+}
+
+@layer components {
+	.bg-noise {
+		background-image: radial-gradient(circle at 1px 1px, rgba(44, 53, 66, 0.08) 1px, transparent 0);
+		background-size: 24px 24px;
+	}
+}
