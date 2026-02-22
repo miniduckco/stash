@@ -29,14 +29,16 @@ Runnable examples live in `examples/`:
 ## Providers and operations
 
 Providers
-- [ ] Ozow
-- [ ] Payfast
-- [ ] Paystack
+- [x] Ozow
+- [x] Payfast
+- [x] Paystack
+- [ ] Paygate
+- [ ] Peach
 
 Supported operations
-- [ ] payments.create
-- [ ] payments.verify (Ozow, Paystack; Payfast unsupported)
-- [ ] webhooks.parse
+- [x] payments.create
+- [x] payments.verify (Ozow, Paystack; Payfast unsupported)
+- [x] webhooks.parse
 
 Notes:
 - Ozow hash excludes `CustomerCellphoneNumber`, `Token`, and `GenerateShortUrl`.
