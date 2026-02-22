@@ -12,7 +12,7 @@ Webhook verification fails most often when frameworks mutate the request body be
 
 ```ts
 import express from "express";
-import { createStash, StashError } from "@miniduck/stash";
+import { createStash, StashError } from "@miniduckco/stash";
 
 const app = express();
 
@@ -60,7 +60,7 @@ app.post("/webhooks/payfast", (req, res) => {
 ## Next.js Route Handler (App Router)
 
 ```ts
-import { createStash, StashError } from "@miniduck/stash";
+import { createStash, StashError } from "@miniduckco/stash";
 
 const stash = createStash({
   provider: "ozow",
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 
 ```ts
 import Fastify from "fastify";
-import { createStash, StashError } from "@miniduck/stash";
+import { createStash, StashError } from "@miniduckco/stash";
 
 const fastify = Fastify();
 

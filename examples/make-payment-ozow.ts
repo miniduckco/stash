@@ -1,4 +1,4 @@
-import { createStash } from "@miniduck/stash";
+import { createStash } from "@miniduckco/stash";
 
 const stash = createStash({
   provider: "ozow",

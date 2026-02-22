@@ -1,4 +1,4 @@
-import { getOzowTransactionStatusByReference } from "@miniduck/stash";
+import { getOzowTransactionStatusByReference } from "@miniduckco/stash";
 
 const status = await getOzowTransactionStatusByReference({
   siteCode: process.env.OZOW_SITE_CODE,

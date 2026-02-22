@@ -111,7 +111,7 @@
 							1
 						</span>
 						<p class="leading-relaxed">
-							Install <code class="rounded bg-muted px-1">@miniduck/stash</code> and set your provider env vars.
+							Install <code class="rounded bg-muted px-1">@miniduckco/stash</code> and set your provider env vars.
 						</p>
 					</li>
 					<li class="flex items-start gap-3">

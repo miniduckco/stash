@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve @miniduck/stash. This guide explains how to get set up and what to expect when proposing changes.
+Thanks for helping improve @miniduckco/stash. This guide explains how to get set up and what to expect when proposing changes.
 
 ## Quick start
 

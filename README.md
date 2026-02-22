@@ -1,11 +1,11 @@
-# @miniduck/stash
+# @miniduckco/stash
 
 Integrate payments in under 15 minutes.
 
 ## Install
 
 ```bash
-npm install @miniduck/stash
+npm install @miniduckco/stash
 ```
 
 ## Getting started

@@ -5,7 +5,7 @@ This walkthrough gets you from install to a successful payment in under 15 minut
 ## 1) Install
 
 ```bash
-npm install @miniduck/stash
+npm install @miniduckco/stash
 ```
 
 ## 2) Create a payment
