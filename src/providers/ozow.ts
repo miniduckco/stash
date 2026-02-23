@@ -1,4 +1,5 @@
 import { sha512Hex } from "../internal/hash.js";
+import { assertProviderCurrency, normalizeCurrency } from "../internal/currency.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
 import type {
@@ -76,12 +77,10 @@ const OZOW_ENDPOINTS = {
 
 function buildOzowPayload(input: PaymentRequest): Record<string, string> {
   const siteCode = requireValue(input.secrets.siteCode, "secrets.siteCode");
-  const currency = (input.currency ?? "ZAR").toUpperCase();
+  const currency = normalizeCurrency(input.currency, "ZAR");
   const country = "ZA";
 
-  if (currency !== "ZAR") {
-    throw new Error("Ozow only supports ZAR amounts");
-  }
+  assertProviderCurrency("ozow", currency);
 
   const payload: Record<string, string> = {
     SiteCode: siteCode,

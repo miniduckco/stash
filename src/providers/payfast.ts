@@ -1,5 +1,6 @@
 import { encodePayfastValue } from "../internal/encoding.js";
 import { md5Hex } from "../internal/hash.js";
+import { assertProviderCurrency, normalizeCurrency } from "../internal/currency.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
 import type {
@@ -71,11 +72,9 @@ const PAYFAST_ENDPOINTS = {
 function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   const merchantId = requireValue(input.secrets.merchantId, "secrets.merchantId");
   const merchantKey = requireValue(input.secrets.merchantKey, "secrets.merchantKey");
-  const currency = (input.currency ?? "ZAR").toUpperCase();
+  const currency = normalizeCurrency(input.currency, "ZAR");
 
-  if (currency !== "ZAR") {
-    throw new Error("Payfast only supports ZAR amounts");
-  }
+  assertProviderCurrency("payfast", currency);
 
   const fields: Record<string, string> = {
     merchant_id: merchantId,

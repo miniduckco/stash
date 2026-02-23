@@ -1,5 +1,7 @@
 import { createHmac } from "node:crypto";
 import { parseMinorUnits, toMinorUnits } from "../internal/amount.js";
+import { normalizeCurrency } from "../internal/currency.js";
+import { StashError } from "../errors.js";
 import { requireValue } from "../internal/guards.js";
 import type {
   PaystackProviderOptions,
@@ -10,12 +12,15 @@ import type {
 
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
-function resolvePaystackAmount(input: PaymentRequest): number {
+function resolvePaystackAmount(
+  input: PaymentRequest,
+  currency?: string
+): number {
   const amountUnit = input.amountUnit ?? "major";
   if (amountUnit === "minor") {
     return parseMinorUnits(input.amount);
   }
-  return toMinorUnits(input.amount, input.currency);
+  return toMinorUnits(input.amount, currency ?? input.currency);
 }
 
 function resolvePaystackOptions(
@@ -33,11 +38,14 @@ export async function makePaystackPayment(
   );
   const email = input.customer?.email;
   if (!email) {
-    throw new Error("Paystack requires customer email");
+    throw new StashError(
+      "missing_required_field",
+      "Paystack requires customer.email. Set customer.email in payments.create."
+    );
   }
 
-  const amount = resolvePaystackAmount(input);
-  const currency = input.currency ?? "ZAR";
+  const currency = normalizeCurrency(input.currency, "ZAR");
+  const amount = resolvePaystackAmount(input, currency);
   const options = resolvePaystackOptions(input);
 
   const payload: Record<string, unknown> = {

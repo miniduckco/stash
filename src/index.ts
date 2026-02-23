@@ -5,6 +5,7 @@ import {
   parseFormEncoded,
   pairsToRecord,
 } from "./internal/form.js";
+import { normalizeCurrency, assertProviderCurrency } from "./internal/currency.js";
 import { formatAmount } from "./internal/guards.js";
 import { StashError } from "./errors.js";
 import type {
@@ -72,7 +73,11 @@ export function createStash(config: StashConfig) {
       create: async (input: PaymentCreateInput): Promise<Payment> => {
         const correlationId = randomUUID();
         const startedAt = Date.now();
-        const currency = input.currency ?? config.defaults?.currency ?? "ZAR";
+        const currency = normalizeCurrency(
+          input.currency,
+          config.defaults?.currency ?? "ZAR"
+        );
+        assertProviderCurrency(provider, currency);
         const amountNumber = Number(formatAmount(input.amount));
 
         emit({
