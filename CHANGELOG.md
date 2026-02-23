@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Convert Paystack amounts from major to minor by default and add an amountUnit override.
+- Normalize currency codes, enforce ZAR-only constraints, and add StashError codes for currency and required fields.
 
 ## 0.1.2
 

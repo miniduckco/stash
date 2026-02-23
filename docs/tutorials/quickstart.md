@@ -12,6 +12,9 @@ npm install @miniduckco/stash
 
 Choose a provider and use the unified `createStash` API.
 
+Currency codes are normalized to uppercase and default to `ZAR`. Ozow and Payfast only
+support ZAR.
+
 - Ozow example: [`examples/make-payment-ozow.ts`](../../examples/make-payment-ozow.ts)
 - Payfast example: [`examples/make-payment-payfast.ts`](../../examples/make-payment-payfast.ts)
 - Paystack example: [`examples/make-payment-paystack.ts`](../../examples/make-payment-paystack.ts)

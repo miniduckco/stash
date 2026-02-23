@@ -47,6 +47,15 @@ payments.create(input: PaymentCreateInput): Promise<Payment>
 
 Creates a payment using the configured provider and returns a canonical `Payment`.
 
+### Currency
+
+Stash normalizes currency codes to uppercase. If you omit `currency`, it defaults to
+`"ZAR"`. Provider constraints:
+
+- Ozow: ZAR only
+- Payfast: ZAR only
+- Paystack: supports ZAR and other currencies
+
 ### providerOptions mapping
 
 Payfast
