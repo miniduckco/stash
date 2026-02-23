@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.3
+
 - Convert Paystack amounts from major to minor by default and add an amountUnit override.
 
 ## 0.1.2
