@@ -28,6 +28,25 @@ test("createStash payments.create returns canonical payment", async () => {
   assert.match(payment.correlationId ?? "", /^[0-9a-f-]{36}$/i);
 });
 
+test("createStash payments.create normalizes currency", async () => {
+  const stash = createStash({
+    provider: "payfast",
+    credentials: {
+      merchantId: "merchant",
+      merchantKey: "key",
+    },
+    testMode: true,
+  });
+
+  const payment = await stash.payments.create({
+    amount: "100.00",
+    currency: "zar",
+    reference: "ORDER-1",
+  });
+
+  assert.equal(payment.currency, "ZAR");
+});
+
 test("createStash emits canonical logs for payments.create", async () => {
   const events: Array<Record<string, unknown>> = [];
   const stash = createStash({
@@ -92,6 +111,26 @@ test("createStash payments.create maps ozow response", async () => {
   globalThis.fetch = originalFetch;
 });
 
+test("createStash payments.create rejects unsupported currency", async () => {
+  const stash = createStash({
+    provider: "payfast",
+    credentials: {
+      merchantId: "merchant",
+      merchantKey: "key",
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      stash.payments.create({
+        amount: "10.00",
+        currency: "USD",
+        reference: "ORDER-2",
+      }),
+    (error) => (error as StashError).code === "unsupported_currency"
+  );
+});
+
 test("createStash payments.create maps paystack response", async () => {
   const originalFetch = globalThis.fetch;
 
@@ -128,6 +167,24 @@ test("createStash payments.create maps paystack response", async () => {
   assert.equal(payment.redirectUrl, "https://checkout.paystack.com/abc");
 
   globalThis.fetch = originalFetch;
+});
+
+test("createStash payments.create requires paystack email", async () => {
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      stash.payments.create({
+        amount: "25.00",
+        reference: "REF-0",
+      }),
+    (error) => (error as StashError).code === "missing_required_field"
+  );
 });
 
 test("createStash payments.create converts paystack major units", async () => {
