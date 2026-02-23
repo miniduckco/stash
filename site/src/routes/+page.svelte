@@ -140,7 +140,7 @@
 					Stay current with new capabilities and breaking changes as the SDK evolves.
 				</p>
 				<div class="mt-4">
-					<Button href="https://github.com/miniduckco/stash/blob/main/CHANGELOG.md" variant="outline">
+					<Button href="/changelog" variant="outline">
 						View changelog
 					</Button>
 				</div>
