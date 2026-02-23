@@ -116,7 +116,7 @@ test("createStash payments.create maps paystack response", async () => {
   });
 
   const payment = await stash.payments.create({
-    amount: 2500,
+    amount: "25.00",
     reference: "REF-1",
     customer: {
       email: "buyer@example.com",
@@ -130,7 +130,24 @@ test("createStash payments.create maps paystack response", async () => {
   globalThis.fetch = originalFetch;
 });
 
-test("createStash payments.create rejects paystack major units", async () => {
+test("createStash payments.create converts paystack major units", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (_url, init) => {
+    const payload = JSON.parse(String(init?.body ?? "")) as { amount?: number };
+    assert.equal(payload.amount, 2500);
+    return {
+      ok: true,
+      json: async () => ({
+        status: true,
+        data: {
+          authorization_url: "https://checkout.paystack.com/abc",
+          reference: "REF-1",
+        },
+      }),
+    } as Response;
+  }) as typeof fetch;
+
   const stash = createStash({
     provider: "paystack",
     credentials: {
@@ -138,17 +155,56 @@ test("createStash payments.create rejects paystack major units", async () => {
     },
   });
 
-  await assert.rejects(
-    () =>
-      stash.payments.create({
-        amount: "10.00",
-        reference: "REF-2",
-        customer: {
-          email: "buyer@example.com",
+  const payment = await stash.payments.create({
+    amount: "25.00",
+    reference: "REF-1",
+    customer: {
+      email: "buyer@example.com",
+    },
+  });
+
+  assert.equal(payment.provider, "paystack");
+  assert.equal(payment.providerRef, "REF-1");
+  assert.equal(payment.redirectUrl, "https://checkout.paystack.com/abc");
+
+  globalThis.fetch = originalFetch;
+});
+
+test("createStash payments.create accepts paystack minor units", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (_url, init) => {
+    const payload = JSON.parse(String(init?.body ?? "")) as { amount?: number };
+    assert.equal(payload.amount, 2500);
+    return {
+      ok: true,
+      json: async () => ({
+        status: true,
+        data: {
+          authorization_url: "https://checkout.paystack.com/def",
+          reference: "REF-2",
         },
       }),
-    /minor units/
-  );
+    } as Response;
+  }) as typeof fetch;
+
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  await stash.payments.create({
+    amount: 2500,
+    amountUnit: "minor",
+    reference: "REF-2",
+    customer: {
+      email: "buyer@example.com",
+    },
+  });
+
+  globalThis.fetch = originalFetch;
 });
 
 test("webhooks.parse returns canonical event for payfast", () => {
@@ -240,6 +296,7 @@ test("webhooks.parse returns canonical event for paystack", () => {
   assert.equal(parsed.provider, "paystack");
   assert.equal(parsed.event.type, "payment.completed");
   assert.equal(parsed.event.data.reference, "REF-3");
+  assert.equal(parsed.event.data.amount, 25);
   assert.match(parsed.correlationId ?? "", /^[0-9a-f-]{36}$/i);
 });
 
