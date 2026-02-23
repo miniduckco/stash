@@ -42,31 +42,29 @@
 <section class="mx-auto w-full max-w-6xl px-6 py-16">
 	<div class="flex flex-col gap-8">
 		<div class="flex flex-col gap-4">
-			<h2 class="text-3xl font-semibold text-foreground md:text-4xl">Coverage that scales with your roadmap.</h2>
+			<h2 class="text-3xl font-semibold text-foreground md:text-4xl">Get out of payment plumbing.</h2>
 			<p class="text-lg text-muted-foreground">
-				Roadmap visibility stays obvious while the API surface stays compact.
+				Unified flows and safe defaults so you can go live faster with fewer surprises.
 			</p>
 		</div>
 		<div class="grid gap-6 md:grid-cols-3">
 			<div class="rounded-2xl border border-border bg-white/70 p-6 shadow-sm">
 				<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Unified API</p>
-				<h3 class="mt-3 text-xl font-semibold text-foreground">One surface, three providers.</h3>
+				<h3 class="mt-3 text-xl font-semibold text-foreground">Integrate once, switch providers.</h3>
+				<p class="mt-2 text-sm text-muted-foreground">One surface for Ozow, Payfast, and Paystack.</p>
+			</div>
+			<div class="rounded-2xl border border-border bg-white/70 p-6 shadow-sm">
+				<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Reliable webhooks</p>
+				<h3 class="mt-3 text-xl font-semibold text-foreground">Reduce integration pain.</h3>
 				<p class="mt-2 text-sm text-muted-foreground">
-					Use <code class="rounded bg-muted px-1">createStash()</code> to switch providers without rewriting flows.
+					Provider-aware signatures and parsing keep edge cases predictable.
 				</p>
 			</div>
 			<div class="rounded-2xl border border-border bg-white/70 p-6 shadow-sm">
-				<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Security</p>
-				<h3 class="mt-3 text-xl font-semibold text-foreground">Provider-accurate verification.</h3>
+				<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Safe defaults</p>
+				<h3 class="mt-3 text-xl font-semibold text-foreground">Ship with confidence.</h3>
 				<p class="mt-2 text-sm text-muted-foreground">
-					Signatures, hashes, and verification rules are handled per provider.
-				</p>
-			</div>
-			<div class="rounded-2xl border border-border bg-white/70 p-6 shadow-sm">
-				<p class="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Docs</p>
-				<h3 class="mt-3 text-xl font-semibold text-foreground">GitHub-first, web-ready.</h3>
-				<p class="mt-2 text-sm text-muted-foreground">
-					Docs are kept with the code, making changes easy to track and review.
+					Clear sandbox vs live behavior from day one.
 				</p>
 			</div>
 		</div>
