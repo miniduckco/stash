@@ -49,4 +49,5 @@ Verify the signature before you update your order.
 
 - Ozow transaction status: [`examples/ozow-status.ts`](../../examples/ozow-status.ts)
 
-Paystack amounts must be provided in minor units.
+Paystack amounts are treated as major units by default. Use `amountUnit: "minor"` if
+you already have minor units.

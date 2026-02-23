@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Convert Paystack amounts from major to minor by default and add an amountUnit override.
+
 ## 0.1.2
 
 - Add canonical structured logging with correlation IDs for payment actions.

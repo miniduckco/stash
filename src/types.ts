@@ -80,6 +80,7 @@ export type Logger = {
 
 export type PaymentCreateInput = {
   amount: string | number;
+  amountUnit?: "major" | "minor";
   currency?: "ZAR" | string;
   reference: string;
   description?: string;
@@ -153,6 +154,7 @@ export type ParsedWebhook = {
 export type PaymentRequest = {
   provider: PaymentProvider;
   amount: string | number;
+  amountUnit?: "major" | "minor";
   currency?: "ZAR" | string;
   reference: string;
   description?: string;

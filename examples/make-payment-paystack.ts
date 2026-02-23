@@ -8,7 +8,7 @@ const stash = createStash({
 });
 
 const payment = await stash.payments.create({
-  amount: 2500,
+  amount: "25.00",
   currency: "ZAR",
   reference: "ORDER-12345",
   customer: {

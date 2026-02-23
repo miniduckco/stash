@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { parseMinorUnits, toMinorUnits } from "../internal/amount.js";
 import { requireValue } from "../internal/guards.js";
 import type {
   PaystackProviderOptions,
@@ -9,16 +10,12 @@ import type {
 
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
-function parseMinorAmount(amount: string | number): number {
-  const raw = typeof amount === "string" ? amount : String(amount);
-  if (raw.includes(".")) {
-    throw new Error("Paystack amount must be in minor units (integer)");
+function resolvePaystackAmount(input: PaymentRequest): number {
+  const amountUnit = input.amountUnit ?? "major";
+  if (amountUnit === "minor") {
+    return parseMinorUnits(input.amount);
   }
-  const value = Number(raw);
-  if (!Number.isInteger(value)) {
-    throw new Error("Paystack amount must be an integer in minor units");
-  }
-  return value;
+  return toMinorUnits(input.amount, input.currency);
 }
 
 function resolvePaystackOptions(
@@ -39,7 +36,7 @@ export async function makePaystackPayment(
     throw new Error("Paystack requires customer email");
   }
 
-  const amount = parseMinorAmount(input.amount);
+  const amount = resolvePaystackAmount(input);
   const currency = input.currency ?? "ZAR";
   const options = resolvePaystackOptions(input);
 
