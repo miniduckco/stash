@@ -1,3 +1,4 @@
+import { fromMinorUnits } from "../internal/amount.js";
 import { pairsToRecord, parseFormEncoded } from "../internal/form.js";
 import type { PaymentRequest, VerificationResult, WebhookEvent } from "../types.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./ozow.js";
@@ -122,6 +123,16 @@ function mapPaystackEvent(payload: Record<string, unknown>): WebhookEvent {
 
   const data = (payload as { data?: Record<string, unknown> }).data ?? {};
 
+  const currency = (data as { currency?: string }).currency
+    ? String((data as { currency?: string }).currency)
+    : undefined;
+
+  const amountRaw = (data as { amount?: number | string }).amount;
+  const amount =
+    amountRaw === undefined || amountRaw === null
+      ? undefined
+      : fromMinorUnits(amountRaw, currency);
+
   return {
     type,
     data: {
@@ -130,12 +141,8 @@ function mapPaystackEvent(payload: Record<string, unknown>): WebhookEvent {
       providerRef: (data as { id?: string | number }).id
         ? String((data as { id?: string | number }).id)
         : undefined,
-      amount: (data as { amount?: number | string }).amount
-        ? Number((data as { amount?: number | string }).amount)
-        : undefined,
-      currency: (data as { currency?: string }).currency
-        ? String((data as { currency?: string }).currency)
-        : undefined,
+      amount,
+      currency,
       raw: payload,
     },
   };

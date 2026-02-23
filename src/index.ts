@@ -93,6 +93,7 @@ export function createStash(config: StashConfig) {
         const paymentRequest: PaymentRequest = {
           provider,
           amount: input.amount,
+          amountUnit: input.amountUnit,
           currency,
           reference: input.reference,
           description: input.description,
