@@ -67,7 +67,11 @@ Ozow
 Paystack
 - `channels` → `channels`
 
-Note: Paystack expects amounts in minor units and Stash does not convert them.
+### Amounts
+
+Amounts are treated as major units by default (for example, "25.00"). For Paystack,
+Stash converts major units to minor units automatically. To send minor units explicitly,
+set `amountUnit: "minor"` in `payments.create`.
 
 ## webhooks.parse
 
