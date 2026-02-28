@@ -27,7 +27,10 @@ import { providerAdapters } from "./providers/adapters.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js";
 import { makePaystackPayment, verifyPaystackWebhook } from "./providers/paystack.js";
-import { requireSupportedCurrency } from "./providers/capabilities.js";
+import {
+  requireCustomerEmail,
+  requireSupportedCurrency,
+} from "./providers/capabilities.js";
 
 export type {
   OzowProviderOptions,
@@ -115,6 +118,7 @@ export function createStash(config: StashConfig) {
 
         const adapter = providerAdapters[provider];
         try {
+          requireCustomerEmail(provider, input.customer?.email);
           const response = await adapter.createPayment(paymentRequest);
           const payment = {
             id: randomUUID(),

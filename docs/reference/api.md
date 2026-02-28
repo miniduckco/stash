@@ -76,6 +76,10 @@ set `amountUnit: "minor"` in `payments.create`.
 Currency values are normalized to uppercase and default to `ZAR` when omitted. Ozow and Payfast
 only accept `ZAR`.
 
+### Required fields
+
+Paystack requires `customer.email` for `payments.create`.
+
 ## webhooks.parse
 
 ```ts

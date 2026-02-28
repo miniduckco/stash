@@ -228,6 +228,34 @@ test("createStash payments.create requires paystack customer email", async () =>
   );
 });
 
+test("createStash payments.create validates paystack email before provider call", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => {
+    throw new Error("fetch called");
+  }) as typeof fetch;
+
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      stash.payments.create({
+        amount: "25.00",
+        reference: "REF-EMAIL",
+      }),
+    (error) =>
+      error instanceof StashError &&
+      error.code === "missing_required_field" &&
+      error.message.includes("customer.email")
+  );
+
+  globalThis.fetch = originalFetch;
+});
+
 test("createStash payments.create normalizes currency", async () => {
   const originalFetch = globalThis.fetch;
 
