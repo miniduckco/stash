@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Standardize provider validation failures with StashError codes/messages.
+- Add provider capability metadata for validation and documentation.
 
 ## 0.1.3
 

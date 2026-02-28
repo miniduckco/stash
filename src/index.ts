@@ -50,7 +50,10 @@ export type {
   WebhookVerifyResult,
 } from "./types.js";
 
+export type { ProviderCapabilities } from "./providers/capabilities.js";
+
 export { StashError } from "./errors.js";
+export { providerCapabilities } from "./providers/capabilities.js";
 
 export { buildFormEncoded, parseFormBody, parseFormEncoded, pairsToRecord } from "./internal/form.js";
 

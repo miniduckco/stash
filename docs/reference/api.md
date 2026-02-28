@@ -93,6 +93,20 @@ Verifies payment status by reference. Supported providers:
 - Paystack ✅
 - Payfast ❌ (`unsupported_capability`)
 
+## providerCapabilities
+
+```ts
+providerCapabilities: Record<PaymentProvider, ProviderCapabilities>
+```
+
+Static metadata describing provider capabilities for validation and docs.
+
+| Provider | Currencies | Required fields | payments.verify |
+| --- | --- | --- | --- |
+| Ozow | ZAR | - | ✅ |
+| Payfast | ZAR | - | ❌ |
+| Paystack | Any | customer.email | ✅ |
+
 ## VerificationResult
 
 ```ts

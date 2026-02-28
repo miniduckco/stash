@@ -1,7 +1,8 @@
 import { createHmac } from "node:crypto";
 import { parseMinorUnits, toMinorUnits } from "../internal/amount.js";
 import { requireValue } from "../internal/guards.js";
-import { invalidProviderData, missingRequiredField } from "../errors.js";
+import { invalidProviderData } from "../errors.js";
+import { requireCustomerEmail } from "./capabilities.js";
 import type {
   PaystackProviderOptions,
   PaymentRequest,
@@ -32,10 +33,7 @@ export async function makePaystackPayment(
     input.secrets.paystackSecretKey,
     "secrets.paystackSecretKey"
   );
-  const email = input.customer?.email;
-  if (!email) {
-    throw missingRequiredField("customer.email");
-  }
+  const email = requireCustomerEmail("paystack", input.customer?.email);
 
   const amount = resolvePaystackAmount(input);
   const currency = input.currency ?? "ZAR";
