@@ -1,7 +1,8 @@
 import { sha512Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
-import { invalidProviderData, missingRequiredField, unsupportedCurrency } from "../errors.js";
+import { invalidProviderData, missingRequiredField } from "../errors.js";
+import { requireSupportedCurrency } from "./capabilities.js";
 import type {
   OzowProviderOptions,
   PaymentRequest,
@@ -80,9 +81,7 @@ function buildOzowPayload(input: PaymentRequest): Record<string, string> {
   const currency = (input.currency ?? "ZAR").toUpperCase();
   const country = "ZA";
 
-  if (currency !== "ZAR") {
-    throw unsupportedCurrency("ozow", currency, ["ZAR"]);
-  }
+  requireSupportedCurrency("ozow", currency);
 
   const payload: Record<string, string> = {
     SiteCode: siteCode,

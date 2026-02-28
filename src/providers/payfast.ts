@@ -2,7 +2,8 @@ import { encodePayfastValue } from "../internal/encoding.js";
 import { md5Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
-import { invalidProviderData, unsupportedCurrency } from "../errors.js";
+import { invalidProviderData } from "../errors.js";
+import { requireSupportedCurrency } from "./capabilities.js";
 import type {
   PayfastProviderOptions,
   PaymentRequest,
@@ -74,9 +75,7 @@ function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   const merchantKey = requireValue(input.secrets.merchantKey, "secrets.merchantKey");
   const currency = (input.currency ?? "ZAR").toUpperCase();
 
-  if (currency !== "ZAR") {
-    throw unsupportedCurrency("payfast", currency, ["ZAR"]);
-  }
+  requireSupportedCurrency("payfast", currency);
 
   const fields: Record<string, string> = {
     merchant_id: merchantId,
