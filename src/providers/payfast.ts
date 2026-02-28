@@ -2,6 +2,7 @@ import { encodePayfastValue } from "../internal/encoding.js";
 import { md5Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
+import { invalidProviderData, unsupportedCurrency } from "../errors.js";
 import type {
   PayfastProviderOptions,
   PaymentRequest,
@@ -74,7 +75,7 @@ function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   const currency = (input.currency ?? "ZAR").toUpperCase();
 
   if (currency !== "ZAR") {
-    throw new Error("Payfast only supports ZAR amounts");
+    throw unsupportedCurrency("payfast", currency, ["ZAR"]);
   }
 
   const fields: Record<string, string> = {
@@ -114,12 +115,12 @@ function normalizePayfastFields(input: PaymentRequest): Record<string, string> {
   if (input.providerData) {
     for (const [key, value] of Object.entries(input.providerData)) {
       if (!PAYFAST_ALLOWED_FIELDS.has(key)) {
-        throw new Error(`Unsupported Payfast field: ${key}`);
+        throw invalidProviderData(`Unsupported Payfast field: ${key}`);
       }
       if (value === undefined || value === null) continue;
       if (key === "signature") continue;
       if (providerOptions && isPayfastProviderOptionField(key)) {
-        throw new Error(`providerData overlaps providerOptions: ${key}`);
+        throw invalidProviderData(`providerData overlaps providerOptions: ${key}`);
       }
       fields[key] = toStringValue(value);
     }
@@ -137,7 +138,7 @@ function applyPayfastProviderOptions(
 
   for (const fieldKey of Object.values(PAYFAST_PROVIDER_OPTION_FIELDS)) {
     if (providerData && fieldKey in providerData) {
-      throw new Error(`providerData overlaps providerOptions: ${fieldKey}`);
+      throw invalidProviderData(`providerData overlaps providerOptions: ${fieldKey}`);
     }
   }
 
