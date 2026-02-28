@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Standardize provider validation failures with StashError codes/messages.
+
 ## 0.1.3
 
 - Convert Paystack amounts from major to minor by default and add an amountUnit override.
