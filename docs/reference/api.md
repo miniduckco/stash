@@ -73,6 +73,9 @@ Amounts are treated as major units by default (for example, "25.00"). For Paysta
 Stash converts major units to minor units automatically. To send minor units explicitly,
 set `amountUnit: "minor"` in `payments.create`.
 
+Currency values are normalized to uppercase and default to `ZAR` when omitted. Ozow and Payfast
+only accept `ZAR`.
+
 ## webhooks.parse
 
 ```ts
