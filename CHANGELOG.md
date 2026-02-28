@@ -5,6 +5,7 @@
 - Standardize provider validation failures with StashError codes/messages.
 - Add provider capability metadata for validation and documentation.
 - Normalize currency casing and enforce ZAR-only constraints for Ozow/Payfast.
+- Validate Paystack required fields before provider calls.
 
 ## 0.1.3
 
