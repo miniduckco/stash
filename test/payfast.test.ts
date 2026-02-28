@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { encodePayfastValue } from "../src/internal/encoding.js";
+import { StashError } from "../src/errors.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "../src/providers/payfast.js";
 
 test("encodePayfastValue uses uppercase hex and plus for spaces", () => {
@@ -73,21 +74,27 @@ test("makePayfastPayment maps providerOptions", () => {
 });
 
 test("makePayfastPayment rejects providerData overlap", () => {
-  assert.throws(() => {
-    makePayfastPayment({
-      provider: "payfast",
-      amount: "100.00",
-      reference: "ORDER-2",
-      secrets: {
-        merchantId: "merchant",
-        merchantKey: "key",
-      },
-      providerOptions: {
-        paymentMethod: "cc",
-      },
-      providerData: {
-        payment_method: "dc",
-      },
-    });
-  }, /providerData overlaps providerOptions/);
+  assert.throws(
+    () => {
+      makePayfastPayment({
+        provider: "payfast",
+        amount: "100.00",
+        reference: "ORDER-2",
+        secrets: {
+          merchantId: "merchant",
+          merchantKey: "key",
+        },
+        providerOptions: {
+          paymentMethod: "cc",
+        },
+        providerData: {
+          payment_method: "dc",
+        },
+      });
+    },
+    (error) =>
+      error instanceof StashError &&
+      error.code === "invalid_provider_data" &&
+      error.message.includes("providerData overlaps providerOptions")
+  );
 });

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
+import { StashError } from "../src/errors.js";
 import {
   buildOzowHashCheck,
   makeOzowPayment,
@@ -111,7 +112,10 @@ test("makeOzowPayment requires variable amount bounds", async () => {
           allowVariableAmount: true,
         },
       }),
-    /variableAmountMin is required/
+    (error) =>
+      error instanceof StashError &&
+      error.code === "missing_required_field" &&
+      error.message.includes("providerOptions.variableAmountMin")
   );
 });
 
@@ -134,6 +138,9 @@ test("makeOzowPayment rejects providerData overlap", async () => {
           SelectedBankId: "OTHER",
         },
       }),
-    /providerData overlaps providerOptions/
+    (error) =>
+      error instanceof StashError &&
+      error.code === "invalid_provider_data" &&
+      error.message.includes("providerData overlaps providerOptions")
   );
 });

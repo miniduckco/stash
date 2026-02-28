@@ -207,6 +207,27 @@ test("createStash payments.create accepts paystack minor units", async () => {
   globalThis.fetch = originalFetch;
 });
 
+test("createStash payments.create requires paystack customer email", async () => {
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      stash.payments.create({
+        amount: "25.00",
+        reference: "REF-EMAIL",
+      }),
+    (error) =>
+      error instanceof StashError &&
+      error.code === "missing_required_field" &&
+      error.message.includes("customer.email")
+  );
+});
+
 test("webhooks.parse returns canonical event for payfast", () => {
   const stash = createStash({
     provider: "payfast",
