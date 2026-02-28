@@ -27,6 +27,7 @@ import { providerAdapters } from "./providers/adapters.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./providers/ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js";
 import { makePaystackPayment, verifyPaystackWebhook } from "./providers/paystack.js";
+import { requireSupportedCurrency } from "./providers/capabilities.js";
 
 export type {
   OzowProviderOptions,
@@ -75,7 +76,10 @@ export function createStash(config: StashConfig) {
       create: async (input: PaymentCreateInput): Promise<Payment> => {
         const correlationId = randomUUID();
         const startedAt = Date.now();
-        const currency = input.currency ?? config.defaults?.currency ?? "ZAR";
+        const currency = normalizeCurrency(
+          input.currency ?? config.defaults?.currency ?? "ZAR"
+        );
+        requireSupportedCurrency(provider, currency);
         const amountNumber = Number(formatAmount(input.amount));
 
         emit({
@@ -358,6 +362,10 @@ export function createStash(config: StashConfig) {
       },
     },
   };
+}
+
+function normalizeCurrency(currency: string): string {
+  return currency.toUpperCase();
 }
 
 function buildSecrets(
