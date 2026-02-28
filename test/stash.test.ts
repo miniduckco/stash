@@ -228,6 +228,66 @@ test("createStash payments.create requires paystack customer email", async () =>
   );
 });
 
+test("createStash payments.create normalizes currency", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (_url, init) => {
+    const payload = JSON.parse(String(init?.body ?? "")) as { currency?: string };
+    assert.equal(payload.currency, "ZAR");
+    return {
+      ok: true,
+      json: async () => ({
+        status: true,
+        data: {
+          authorization_url: "https://checkout.paystack.com/abc",
+          reference: "REF-1",
+        },
+      }),
+    } as Response;
+  }) as typeof fetch;
+
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  await stash.payments.create({
+    amount: "25.00",
+    currency: "zar",
+    reference: "REF-1",
+    customer: {
+      email: "buyer@example.com",
+    },
+  });
+
+  globalThis.fetch = originalFetch;
+});
+
+test("createStash payments.create enforces ZAR-only providers", async () => {
+  const stash = createStash({
+    provider: "payfast",
+    credentials: {
+      merchantId: "merchant",
+      merchantKey: "key",
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      stash.payments.create({
+        amount: "10.00",
+        currency: "USD",
+        reference: "ORDER-ZAR",
+      }),
+    (error) =>
+      error instanceof StashError &&
+      error.code === "unsupported_currency" &&
+      error.message.includes("payfast")
+  );
+});
+
 test("webhooks.parse returns canonical event for payfast", () => {
   const stash = createStash({
     provider: "payfast",
