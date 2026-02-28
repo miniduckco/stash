@@ -1,6 +1,7 @@
 import { sha512Hex } from "../internal/hash.js";
 import { formatAmount, requireValue, toStringValue } from "../internal/guards.js";
 import { parseFormEncoded, pairsToRecord } from "../internal/form.js";
+import { invalidProviderData, missingRequiredField, unsupportedCurrency } from "../errors.js";
 import type {
   OzowProviderOptions,
   PaymentRequest,
@@ -80,7 +81,7 @@ function buildOzowPayload(input: PaymentRequest): Record<string, string> {
   const country = "ZA";
 
   if (currency !== "ZAR") {
-    throw new Error("Ozow only supports ZAR amounts");
+    throw unsupportedCurrency("ozow", currency, ["ZAR"]);
   }
 
   const payload: Record<string, string> = {
@@ -127,12 +128,12 @@ function buildOzowPayload(input: PaymentRequest): Record<string, string> {
   if (input.providerData) {
     for (const [key, value] of Object.entries(input.providerData)) {
       if (!OZOW_ALLOWED_FIELDS.has(key)) {
-        throw new Error(`Unsupported Ozow field: ${key}`);
+        throw invalidProviderData(`Unsupported Ozow field: ${key}`);
       }
       if (value === undefined || value === null) continue;
       if (key === "HashCheck") continue;
       if (providerOptions && isOzowProviderOptionField(key)) {
-        throw new Error(`providerData overlaps providerOptions: ${key}`);
+        throw invalidProviderData(`providerData overlaps providerOptions: ${key}`);
       }
       payload[key] = toStringValue(value);
     }
@@ -150,7 +151,7 @@ function applyOzowProviderOptions(
 
   for (const fieldKey of Object.values(OZOW_PROVIDER_OPTION_FIELDS)) {
     if (providerData && fieldKey in providerData) {
-      throw new Error(`providerData overlaps providerOptions: ${fieldKey}`);
+      throw invalidProviderData(`providerData overlaps providerOptions: ${fieldKey}`);
     }
   }
 
@@ -168,10 +169,10 @@ function applyOzowProviderOptions(
 
   if (options.allowVariableAmount) {
     if (options.variableAmountMin === undefined) {
-      throw new Error("variableAmountMin is required when allowVariableAmount is true");
+      throw missingRequiredField("providerOptions.variableAmountMin");
     }
     if (options.variableAmountMax === undefined) {
-      throw new Error("variableAmountMax is required when allowVariableAmount is true");
+      throw missingRequiredField("providerOptions.variableAmountMax");
     }
     payload.VariableAmountMin = String(options.variableAmountMin);
     payload.VariableAmountMax = String(options.variableAmountMax);

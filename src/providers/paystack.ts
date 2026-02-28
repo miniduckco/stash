@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { parseMinorUnits, toMinorUnits } from "../internal/amount.js";
 import { requireValue } from "../internal/guards.js";
+import { invalidProviderData, missingRequiredField } from "../errors.js";
 import type {
   PaystackProviderOptions,
   PaymentRequest,
@@ -33,7 +34,7 @@ export async function makePaystackPayment(
   );
   const email = input.customer?.email;
   if (!email) {
-    throw new Error("Paystack requires customer email");
+    throw missingRequiredField("customer.email");
   }
 
   const amount = resolvePaystackAmount(input);
@@ -61,12 +62,12 @@ export async function makePaystackPayment(
 
   if (input.providerData) {
     if (options?.channels && "channels" in input.providerData) {
-      throw new Error("providerData overlaps providerOptions: channels");
+      throw invalidProviderData("providerData overlaps providerOptions: channels");
     }
     for (const [key, value] of Object.entries(input.providerData)) {
       if (value === undefined || value === null) continue;
       if (key in payload) {
-        throw new Error(`providerData overlaps core fields: ${key}`);
+        throw invalidProviderData(`providerData overlaps core fields: ${key}`);
       }
       (payload as Record<string, unknown>)[key] = value;
     }

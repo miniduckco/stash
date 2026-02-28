@@ -1,6 +1,8 @@
+import { missingRequiredField } from "../errors.js";
+
 export function requireValue<T>(value: T | undefined | null, name: string): T {
   if (value === undefined || value === null || value === "") {
-    throw new Error(`Missing required value: ${name}`);
+    throw missingRequiredField(name);
   }
 
   return value as T;

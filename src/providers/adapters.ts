@@ -1,6 +1,7 @@
 import { fromMinorUnits } from "../internal/amount.js";
 import { pairsToRecord, parseFormEncoded } from "../internal/form.js";
 import type { PaymentRequest, VerificationResult, WebhookEvent } from "../types.js";
+import { missingRequiredField } from "../errors.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./payfast.js";
 import { makePaystackPayment, verifyPaystackPayment, verifyPaystackWebhook } from "./paystack.js";
@@ -167,8 +168,11 @@ async function verifyOzowPaymentByReference(
 ): Promise<VerificationResult> {
   const siteCode = input.secrets.siteCode;
   const apiKey = input.secrets.apiKey;
-  if (!siteCode || !apiKey) {
-    throw new Error("Ozow credentials missing for verification");
+  if (!siteCode) {
+    throw missingRequiredField("secrets.siteCode");
+  }
+  if (!apiKey) {
+    throw missingRequiredField("secrets.apiKey");
   }
 
   const baseUrl = input.testMode
@@ -218,7 +222,7 @@ async function verifyPaystackPaymentByReference(
 ): Promise<VerificationResult> {
   const secretKey = input.secrets.paystackSecretKey;
   if (!secretKey) {
-    throw new Error("Paystack secret key missing for verification");
+    throw missingRequiredField("secrets.paystackSecretKey");
   }
 
   return verifyPaystackPayment(input.reference, secretKey);
