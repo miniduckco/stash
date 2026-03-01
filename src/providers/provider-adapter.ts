@@ -5,6 +5,7 @@ import type {
   SubscriptionCreateInput,
   SubscriptionPlan,
   SubscriptionPlanCreateInput,
+  SubscriptionWebhookEvent,
   VerificationResult,
   WebhookEvent,
 } from "../types.js";
@@ -17,7 +18,7 @@ export type ProviderWebhookInput = {
 
 export type ProviderWebhookResult = {
   isValid: boolean;
-  event: WebhookEvent;
+  event: WebhookEvent | SubscriptionWebhookEvent;
   raw: Record<string, unknown>;
 };
 
