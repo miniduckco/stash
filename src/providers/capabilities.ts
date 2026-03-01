@@ -1,5 +1,5 @@
 import type { PaymentProvider } from "../types.js";
-import { missingRequiredField, unsupportedCurrency } from "../errors.js";
+import { StashError, missingRequiredField, unsupportedCurrency } from "../errors.js";
 
 export type ProviderCapabilities = {
   currencies?: string[];
@@ -9,6 +9,8 @@ export type ProviderCapabilities = {
   supports?: {
     verify?: boolean;
     webhooks?: boolean;
+    subscriptions?: boolean;
+    plans?: boolean;
   };
 };
 
@@ -18,6 +20,8 @@ export const providerCapabilities: Record<PaymentProvider, ProviderCapabilities>
     supports: {
       verify: true,
       webhooks: true,
+      subscriptions: false,
+      plans: false,
     },
   },
   payfast: {
@@ -25,6 +29,8 @@ export const providerCapabilities: Record<PaymentProvider, ProviderCapabilities>
     supports: {
       verify: false,
       webhooks: true,
+      subscriptions: false,
+      plans: false,
     },
   },
   paystack: {
@@ -34,9 +40,29 @@ export const providerCapabilities: Record<PaymentProvider, ProviderCapabilities>
     supports: {
       verify: true,
       webhooks: true,
+      subscriptions: true,
+      plans: true,
     },
   },
 };
+
+export function requireSubscriptionSupport(provider: PaymentProvider): void {
+  const supported = providerCapabilities[provider].supports?.subscriptions;
+  if (supported) return;
+  throw new StashError(
+    "unsupported_capability",
+    `subscriptions are not supported for ${provider}`
+  );
+}
+
+export function requirePlanSupport(provider: PaymentProvider): void {
+  const supported = providerCapabilities[provider].supports?.plans;
+  if (supported) return;
+  throw new StashError(
+    "unsupported_capability",
+    `subscription plans are not supported for ${provider}`
+  );
+}
 
 export function requireSupportedCurrency(
   provider: PaymentProvider,
