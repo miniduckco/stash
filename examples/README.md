@@ -8,6 +8,7 @@
 - make payment (Ozow API): `examples/make-payment-ozow.ts`
 - make payment (Payfast form post): `examples/make-payment-payfast.ts`
 - make payment (Paystack card checkout): `examples/make-payment-paystack.ts`
+- subscriptions (Paystack plans + create): `examples/subscriptions-paystack.ts`
 - verify webhook (Ozow): `examples/webhook-ozow.ts`
 - verify webhook (Payfast ITN): `examples/webhook-payfast.ts`
 - verify webhook (Paystack): `examples/webhook-paystack.ts`
