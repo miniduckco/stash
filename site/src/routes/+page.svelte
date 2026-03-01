@@ -28,6 +28,7 @@
 		<div class="flex flex-wrap gap-3">
 			<Button href="/docs/tutorials/quickstart" size="lg">Start the quickstart</Button>
 			<Button href="/docs" variant="outline" size="lg">Browse documentation</Button>
+			<Button href="/examples" variant="secondary" size="lg">View examples</Button>
 		</div>
 		<div class="flex flex-wrap items-center gap-3 text-sm font-semibold text-secondary">
 			<span>Ozow</span>
