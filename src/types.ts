@@ -138,6 +138,27 @@ export type WebhookEvent = {
   };
 };
 
+export type SubscriptionWebhookEvent = {
+  type:
+    | "subscription.created"
+    | "subscription.disabled"
+    | "subscription.not_renewing"
+    | "invoice.created"
+    | "invoice.updated"
+    | "invoice.payment_failed";
+  data: {
+    provider: PaymentProvider;
+    subscriptionCode?: string;
+    customerCode?: string;
+    planCode?: string;
+    invoiceCode?: string;
+    status?: string;
+    amount?: number;
+    currency?: string;
+    raw: unknown;
+  };
+};
+
 export type WebhookParseInput = {
   provider?: PaymentProvider;
   rawBody: string | Buffer;
@@ -145,10 +166,55 @@ export type WebhookParseInput = {
 };
 
 export type ParsedWebhook = {
-  event: WebhookEvent;
+  event: WebhookEvent | SubscriptionWebhookEvent;
   provider: PaymentProvider;
   correlationId?: string;
   raw: Record<string, unknown>;
+};
+
+export type SubscriptionPlanCreateInput = {
+  name: string;
+  interval:
+    | "hourly"
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "quarterly"
+    | "biannually"
+    | "annually";
+  amount: string | number;
+  amountUnit?: "major" | "minor";
+  currency?: string;
+  invoiceLimit?: number;
+  provider?: PaymentProvider;
+};
+
+export type SubscriptionPlan = {
+  provider: PaymentProvider;
+  planCode: string;
+  name: string;
+  amount: number;
+  currency?: string;
+  interval: string;
+  raw?: unknown;
+};
+
+export type SubscriptionCreateInput = {
+  customer: string;
+  plan: string;
+  authorization?: string;
+  startDate?: string;
+  provider?: PaymentProvider;
+};
+
+export type Subscription = {
+  provider: PaymentProvider;
+  status: "active" | "non-renewing" | "attention" | "completed" | "cancelled" | "unknown";
+  subscriptionCode: string;
+  customerCode?: string;
+  planCode?: string;
+  startDate?: string;
+  raw?: unknown;
 };
 
 export type PaymentRequest = {
