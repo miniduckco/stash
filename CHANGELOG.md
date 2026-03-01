@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 0.1.6
+
 - Add Paystack subscriptions (plans, create) and subscription webhook events.
+- Guard webhook parse logging for subscription event metadata.
 
 ## 0.1.5
 
