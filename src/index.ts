@@ -34,6 +34,8 @@ import { makePayfastPayment, verifyPayfastWebhook } from "./providers/payfast.js
 import { makePaystackPayment, verifyPaystackWebhook } from "./providers/paystack.js";
 import {
   requireCustomerEmail,
+  requirePlanSupport,
+  requireSubscriptionSupport,
   requireSupportedCurrency,
 } from "./providers/capabilities.js";
 
@@ -274,6 +276,49 @@ export function createStash(config: StashConfig) {
           });
           throw error;
         }
+      },
+    },
+    subscriptions: {
+      plans: {
+        create: async (
+          input: SubscriptionPlanCreateInput
+        ): Promise<SubscriptionPlan> => {
+          const resolvedProvider = input.provider ?? provider;
+          requirePlanSupport(resolvedProvider);
+          const adapter = providerAdapters[resolvedProvider];
+          if (!adapter?.createPlan) {
+            throw new StashError(
+              "unsupported_capability",
+              `subscriptions.plans.create is not supported for ${resolvedProvider}`
+            );
+          }
+
+          return adapter.createPlan({
+            ...input,
+            provider: resolvedProvider,
+            currency: input.currency ?? config.defaults?.currency,
+            secrets: buildSecrets(resolvedProvider, config.credentials),
+          });
+        },
+      },
+      create: async (
+        input: SubscriptionCreateInput
+      ): Promise<Subscription> => {
+        const resolvedProvider = input.provider ?? provider;
+        requireSubscriptionSupport(resolvedProvider);
+        const adapter = providerAdapters[resolvedProvider];
+        if (!adapter?.createSubscription) {
+          throw new StashError(
+            "unsupported_capability",
+            `subscriptions.create is not supported for ${resolvedProvider}`
+          );
+        }
+
+        return adapter.createSubscription({
+          ...input,
+          provider: resolvedProvider,
+          secrets: buildSecrets(resolvedProvider, config.credentials),
+        });
       },
     },
     webhooks: {
