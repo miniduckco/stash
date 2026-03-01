@@ -409,6 +409,98 @@ test("webhooks.parse returns canonical event for paystack", () => {
   assert.match(parsed.correlationId ?? "", /^[0-9a-f-]{36}$/i);
 });
 
+test("webhooks.parse maps paystack subscription events", () => {
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  const payload = {
+    event: "subscription.create",
+    data: {
+      subscription_code: "SUB_123",
+      customer: {
+        customer_code: "CUS_456",
+      },
+      plan: {
+        plan_code: "PLN_789",
+      },
+      amount: 50000,
+      currency: "ZAR",
+      status: "active",
+    },
+  };
+
+  const rawBody = JSON.stringify(payload);
+  const signature = createHmac("sha512", "sk_test")
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  const parsed = stash.webhooks.parse({
+    rawBody,
+    headers: {
+      "x-paystack-signature": signature,
+    },
+  });
+
+  assert.equal(parsed.event.type, "subscription.created");
+  assert.equal(parsed.event.data.subscriptionCode, "SUB_123");
+  assert.equal(parsed.event.data.customerCode, "CUS_456");
+  assert.equal(parsed.event.data.planCode, "PLN_789");
+  assert.equal(parsed.event.data.amount, 500);
+  assert.equal(parsed.event.data.currency, "ZAR");
+});
+
+test("webhooks.parse maps paystack invoice events", () => {
+  const stash = createStash({
+    provider: "paystack",
+    credentials: {
+      secretKey: "sk_test",
+    },
+  });
+
+  const payload = {
+    event: "invoice.payment_failed",
+    data: {
+      invoice_code: "INV_123",
+      subscription: {
+        subscription_code: "SUB_321",
+      },
+      customer: {
+        customer_code: "CUS_654",
+      },
+      plan: {
+        plan_code: "PLN_987",
+      },
+      amount: 2500,
+      currency: "ZAR",
+      status: "failed",
+    },
+  };
+
+  const rawBody = JSON.stringify(payload);
+  const signature = createHmac("sha512", "sk_test")
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  const parsed = stash.webhooks.parse({
+    rawBody,
+    headers: {
+      "x-paystack-signature": signature,
+    },
+  });
+
+  assert.equal(parsed.event.type, "invoice.payment_failed");
+  assert.equal(parsed.event.data.invoiceCode, "INV_123");
+  assert.equal(parsed.event.data.subscriptionCode, "SUB_321");
+  assert.equal(parsed.event.data.customerCode, "CUS_654");
+  assert.equal(parsed.event.data.planCode, "PLN_987");
+  assert.equal(parsed.event.data.amount, 25);
+  assert.equal(parsed.event.data.currency, "ZAR");
+});
+
 test("payments.verify throws unsupported_capability for payfast", async () => {
   const stash = createStash({
     provider: "payfast",

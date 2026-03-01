@@ -1,6 +1,11 @@
 import { fromMinorUnits } from "../internal/amount.js";
 import { pairsToRecord, parseFormEncoded } from "../internal/form.js";
-import type { PaymentRequest, VerificationResult, WebhookEvent } from "../types.js";
+import type {
+  PaymentRequest,
+  SubscriptionWebhookEvent,
+  VerificationResult,
+  WebhookEvent,
+} from "../types.js";
 import { missingRequiredField } from "../errors.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./payfast.js";
@@ -124,11 +129,80 @@ function parsePaystackWebhook(
   };
 }
 
-function mapPaystackEvent(payload: Record<string, unknown>): WebhookEvent {
+function mapPaystackEvent(
+  payload: Record<string, unknown>
+): WebhookEvent | SubscriptionWebhookEvent {
   const eventType = String((payload as { event?: string }).event ?? "").toLowerCase();
-  const type = eventType === "charge.success" ? "payment.completed" : "payment.failed";
-
   const data = (payload as { data?: Record<string, unknown> }).data ?? {};
+
+  if (
+    eventType === "subscription.create" ||
+    eventType === "subscription.disable" ||
+    eventType === "subscription.not_renew" ||
+    eventType === "invoice.create" ||
+    eventType === "invoice.update" ||
+    eventType === "invoice.payment_failed"
+  ) {
+    const subscriptionType =
+      eventType === "subscription.create"
+        ? "subscription.created"
+        : eventType === "subscription.disable"
+          ? "subscription.disabled"
+          : eventType === "subscription.not_renew"
+            ? "subscription.not_renewing"
+            : eventType === "invoice.create"
+              ? "invoice.created"
+              : eventType === "invoice.update"
+                ? "invoice.updated"
+                : "invoice.payment_failed";
+
+    const currency = (data as { currency?: string }).currency
+      ? String((data as { currency?: string }).currency)
+      : undefined;
+
+    const amountRaw = (data as { amount?: number | string }).amount;
+    const amount =
+      amountRaw === undefined || amountRaw === null
+        ? undefined
+        : fromMinorUnits(amountRaw, currency);
+
+    const subscriptionCode =
+      (data as { subscription?: { subscription_code?: string } }).subscription
+        ?.subscription_code ??
+      (data as { subscription_code?: string }).subscription_code;
+
+    const customerCode =
+      (data as { customer?: { customer_code?: string } }).customer
+        ?.customer_code ??
+      (data as { customer_code?: string }).customer_code;
+
+    const planCode =
+      (data as { plan?: { plan_code?: string } }).plan?.plan_code ??
+      (data as { plan_code?: string }).plan_code;
+
+    const invoiceCode =
+      (data as { invoice?: { invoice_code?: string } }).invoice?.invoice_code ??
+      (data as { invoice_code?: string }).invoice_code;
+
+    const status = (data as { status?: string }).status;
+
+    return {
+      type: subscriptionType,
+      data: {
+        provider: "paystack",
+        subscriptionCode,
+        customerCode,
+        planCode,
+        invoiceCode,
+        status,
+        amount,
+        currency,
+        raw: payload,
+      },
+    };
+  }
+
+  const type = eventType === "charge.success" ? "payment.completed" : "payment.failed";
 
   const currency = (data as { currency?: string }).currency
     ? String((data as { currency?: string }).currency)
