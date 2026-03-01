@@ -411,8 +411,14 @@ export function createStash(config: StashConfig) {
           metadata: {
             amount: parsed.event.data.amount,
             currency: parsed.event.data.currency,
-            reference: parsed.event.data.reference,
-            provider_ref: parsed.event.data.providerRef,
+            reference:
+              "reference" in parsed.event.data
+                ? parsed.event.data.reference
+                : undefined,
+            provider_ref:
+              "providerRef" in parsed.event.data
+                ? parsed.event.data.providerRef
+                : undefined,
             testMode,
           },
         });
