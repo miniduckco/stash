@@ -100,6 +100,56 @@ Verifies payment status by reference. Supported providers:
 - Paystack ✅
 - Payfast ❌ (`unsupported_capability`)
 
+## subscriptions.plans.create
+
+```ts
+subscriptions.plans.create(input: SubscriptionPlanCreateInput): Promise<SubscriptionPlan>
+```
+
+Creates a subscription plan for the configured provider.
+
+Supported providers:
+
+- Paystack ✅
+
+### SubscriptionPlanCreateInput
+
+```ts
+type SubscriptionPlanCreateInput = {
+  name: string
+  interval: "hourly" | "daily" | "weekly" | "monthly" | "quarterly" | "biannually" | "annually"
+  amount: string | number
+  amountUnit?: "major" | "minor"
+  currency?: string
+  invoiceLimit?: number
+  provider?: "paystack"
+}
+```
+
+## subscriptions.create
+
+```ts
+subscriptions.create(input: SubscriptionCreateInput): Promise<Subscription>
+```
+
+Creates a subscription for an existing customer and plan.
+
+Supported providers:
+
+- Paystack ✅
+
+### SubscriptionCreateInput
+
+```ts
+type SubscriptionCreateInput = {
+  customer: string
+  plan: string
+  authorization?: string
+  startDate?: string
+  provider?: "paystack"
+}
+```
+
 ## providerCapabilities
 
 ```ts
@@ -159,11 +209,36 @@ type WebhookEvent = {
 }
 ```
 
+## SubscriptionWebhookEvent (canonical)
+
+```ts
+type SubscriptionWebhookEvent = {
+  type:
+    | "subscription.created"
+    | "subscription.disabled"
+    | "subscription.not_renewing"
+    | "invoice.created"
+    | "invoice.updated"
+    | "invoice.payment_failed"
+  data: {
+    provider: "paystack"
+    subscriptionCode?: string
+    customerCode?: string
+    planCode?: string
+    invoiceCode?: string
+    status?: string
+    amount?: number
+    currency?: string
+    raw: unknown
+  }
+}
+```
+
 ## ParsedWebhook
 
 ```ts
 type ParsedWebhook = {
-  event: WebhookEvent
+  event: WebhookEvent | SubscriptionWebhookEvent
   provider: "ozow" | "payfast" | "paystack"
   correlationId?: string
   raw: Record<string, unknown>
