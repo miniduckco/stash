@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Paystack subscriptions (plans, create) and subscription webhook events.
+
 ## 0.1.5
 
 - Standardize provider validation failures with StashError codes/messages.
