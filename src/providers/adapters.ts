@@ -6,6 +6,7 @@ import { makeOzowPayment, verifyOzowWebhook } from "./ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./payfast.js";
 import {
   createPaystackPlan,
+  createPaystackSubscription,
   makePaystackPayment,
   verifyPaystackPayment,
   verifyPaystackWebhook,
@@ -253,6 +254,7 @@ export const paystackAdapter: ProviderAdapter = {
   verifyPayment: (input: ProviderVerifyInput) =>
     verifyPaystackPaymentByReference(input),
   createPlan: (input) => createPaystackPlan(input),
+  createSubscription: (input) => createPaystackSubscription(input),
 };
 
 export const providerAdapters: Record<PaymentRequest["provider"], ProviderAdapter> =

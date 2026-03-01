@@ -1,6 +1,8 @@
 import type {
   PaymentRequest,
   PaymentResponse,
+  Subscription,
+  SubscriptionCreateInput,
   SubscriptionPlan,
   SubscriptionPlanCreateInput,
   VerificationResult,
@@ -29,6 +31,10 @@ export type ProviderPlanCreateInput = {
   secrets: PaymentRequest["secrets"];
 } & SubscriptionPlanCreateInput;
 
+export type ProviderSubscriptionCreateInput = {
+  secrets: PaymentRequest["secrets"];
+} & SubscriptionCreateInput;
+
 
 export interface ProviderAdapter {
   id: PaymentRequest["provider"];
@@ -36,4 +42,7 @@ export interface ProviderAdapter {
   parseWebhook(input: ProviderWebhookInput): ProviderWebhookResult;
   verifyPayment?: (input: ProviderVerifyInput) => Promise<VerificationResult>;
   createPlan?: (input: ProviderPlanCreateInput) => Promise<SubscriptionPlan>;
+  createSubscription?: (
+    input: ProviderSubscriptionCreateInput
+  ) => Promise<Subscription>;
 }
