@@ -4,3 +4,4 @@ dist/
 .kamal/
 .svelte-kit/
 config/deploy.yml
+providers/
