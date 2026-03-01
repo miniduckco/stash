@@ -4,7 +4,12 @@ import type { PaymentRequest, VerificationResult, WebhookEvent } from "../types.
 import { missingRequiredField } from "../errors.js";
 import { makeOzowPayment, verifyOzowWebhook } from "./ozow.js";
 import { makePayfastPayment, verifyPayfastWebhook } from "./payfast.js";
-import { makePaystackPayment, verifyPaystackPayment, verifyPaystackWebhook } from "./paystack.js";
+import {
+  createPaystackPlan,
+  makePaystackPayment,
+  verifyPaystackPayment,
+  verifyPaystackWebhook,
+} from "./paystack.js";
 import type {
   ProviderAdapter,
   ProviderWebhookInput,
@@ -247,6 +252,7 @@ export const paystackAdapter: ProviderAdapter = {
   parseWebhook: (input: ProviderWebhookInput) => parsePaystackWebhook(input),
   verifyPayment: (input: ProviderVerifyInput) =>
     verifyPaystackPaymentByReference(input),
+  createPlan: (input) => createPaystackPlan(input),
 };
 
 export const providerAdapters: Record<PaymentRequest["provider"], ProviderAdapter> =

@@ -1,12 +1,14 @@
 import { createHmac } from "node:crypto";
-import { parseMinorUnits, toMinorUnits } from "../internal/amount.js";
+import { fromMinorUnits, parseMinorUnits, toMinorUnits } from "../internal/amount.js";
 import { requireValue } from "../internal/guards.js";
-import { invalidProviderData } from "../errors.js";
+import { invalidProviderData, missingRequiredField } from "../errors.js";
 import { requireCustomerEmail } from "./capabilities.js";
 import type {
   PaystackProviderOptions,
   PaymentRequest,
   PaymentResponse,
+  SubscriptionPlan,
+  SubscriptionPlanCreateInput,
   VerificationResult,
 } from "../types.js";
 
@@ -19,6 +21,15 @@ function resolvePaystackAmount(input: PaymentRequest): number {
   }
   return toMinorUnits(input.amount, input.currency);
 }
+
+function resolvePaystackPlanAmount(input: SubscriptionPlanCreateInput): number {
+  const amountUnit = input.amountUnit ?? "major";
+  if (amountUnit === "minor") {
+    return parseMinorUnits(input.amount);
+  }
+  return toMinorUnits(input.amount, input.currency);
+}
+
 
 function resolvePaystackOptions(
   input: PaymentRequest
@@ -101,6 +112,77 @@ export async function makePaystackPayment(
     raw: body,
   };
 }
+
+export async function createPaystackPlan(
+  input: SubscriptionPlanCreateInput & { secrets: PaymentRequest["secrets"] }
+): Promise<SubscriptionPlan> {
+  const secretKey = requireValue(
+    input.secrets.paystackSecretKey,
+    "secrets.paystackSecretKey"
+  );
+  if (!input.name) {
+    throw missingRequiredField("name");
+  }
+  if (!input.interval) {
+    throw missingRequiredField("interval");
+  }
+
+  const amount = resolvePaystackPlanAmount(input);
+
+  const payload: Record<string, unknown> = {
+    name: input.name,
+    interval: input.interval,
+    amount,
+  };
+
+  if (input.currency) {
+    payload.currency = input.currency;
+  }
+
+  if (input.invoiceLimit !== undefined) {
+    payload.invoice_limit = input.invoiceLimit;
+  }
+
+  const response = await fetch(`${PAYSTACK_BASE_URL}/plan`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await response.json().catch(() => null);
+  if (!response.ok || !body?.status) {
+    const message = body?.message || response.statusText;
+    throw new Error(`Paystack plan creation failed: ${message}`);
+  }
+
+  const data = body?.data ?? {};
+  const planCode = data?.plan_code ?? data?.planCode;
+  if (!planCode) {
+    throw new Error("Paystack plan response missing plan_code");
+  }
+
+  const amountRaw = data?.amount;
+  const currency = data?.currency ?? input.currency;
+  const resolvedAmount =
+    amountRaw === undefined || amountRaw === null
+      ? fromMinorUnits(amount, currency)
+      : fromMinorUnits(amountRaw, currency);
+
+  return {
+    provider: "paystack",
+    planCode: String(planCode),
+    name: String(data?.name ?? input.name),
+    amount: Number.isFinite(resolvedAmount) ? resolvedAmount : 0,
+    currency: currency ? String(currency) : undefined,
+    interval: String(data?.interval ?? input.interval),
+    raw: body,
+  };
+}
+
 
 export function verifyPaystackWebhook(
   rawBody: string | Buffer,
