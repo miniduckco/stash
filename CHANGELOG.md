@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.7
+
+- Add curated examples page to the site and wire it into navigation.
+- Add Paystack subscription example and expand README payment snippets.
+
 ## 0.1.6
 
 - Add Paystack subscriptions (plans, create) and subscription webhook events.
